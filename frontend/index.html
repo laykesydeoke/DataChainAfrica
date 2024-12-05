@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DataChain Africa - Transparent Data Tracking</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <nav class="nav">
+        <div class="nav-brand">DataChain Africa</div>
+        <ul class="nav-menu">
+            <li><a href="#features">Features</a></li>
+            <li><a href="#plans">Plans</a></li>
+            <li><a href="#marketplace">Marketplace</a></li>
+        </ul>
+        <button id="walletBtn" class="btn-wallet">Connect Wallet</button>
+    </nav>
+
+    <header class="hero">
+        <h1>Transparent Mobile Data Tracking for Africa</h1>
+        <p>Blockchain-verified data usage tracking and billing. No hidden charges, no disputes. Every megabyte accounted for on-chain.</p>
+        <div class="hero-cta">
+            <a href="#plans" class="btn-main">View Plans</a>
+            <a href="#features" class="btn-ghost">How It Works</a>
+        </div>
+    </header>
+
+    <section id="features" class="features">
+        <h2>Why DataChain?</h2>
+        <div class="grid-3">
+            <div class="feature">
+                <h3>On-Chain Verification</h3>
+                <p>Every data usage record is stored on the Stacks blockchain, making billing disputes a thing of the past.</p>
+            </div>
+            <div class="feature">
+                <h3>Smart Billing</h3>
+                <p>Automated billing contracts handle payments, renewals, and plan changes without middlemen.</p>
+            </div>
+            <div class="feature">
+                <h3>Data Marketplace</h3>
+                <p>Trade unused data with other users through secure peer-to-peer smart contract exchanges.</p>
+            </div>
+        </div>
+    </section>
+
+    <section id="dashboard" class="dashboard">
+        <h2>Your Data Dashboard</h2>
+        <div class="dash-grid">
+            <div class="dash-card">
+                <span class="dash-label">Data Used</span>
+                <span id="dataUsed" class="dash-value">--</span>
+                <span class="dash-unit">MB</span>
+            </div>
+            <div class="dash-card">
+                <span class="dash-label">Balance</span>
+                <span id="dataBalance" class="dash-value">--</span>
+                <span class="dash-unit">MB</span>
+            </div>
+            <div class="dash-card">
+                <span class="dash-label">Plan</span>
+                <span id="planType" class="dash-value">--</span>
+            </div>
+        </div>
+        <p class="dash-note">Connect your wallet to view usage data</p>
+    </section>
+
+    <section id="plans" class="plans">
+        <h2>Data Plans</h2>
+        <div class="grid-3">
+            <div class="plan-card">
+                <h3>Daily</h3>
+                <p class="plan-data">500 MB</p>
+                <p class="plan-price">50 STX</p>
+                <button class="btn-plan" data-plan="1">Subscribe</button>
+            </div>
+            <div class="plan-card featured">
+                <h3>Weekly</h3>
+                <p class="plan-data">3 GB</p>
+                <p class="plan-price">250 STX</p>
+                <button class="btn-plan" data-plan="2">Subscribe</button>
+            </div>
+            <div class="plan-card">
+                <h3>Monthly</h3>
+                <p class="plan-data">15 GB</p>
+                <p class="plan-price">800 STX</p>
+                <button class="btn-plan" data-plan="3">Subscribe</button>
+            </div>
+        </div>
+    </section>
+
+    <section id="marketplace" class="market">
+        <h2>Data Marketplace</h2>
+        <div id="listings" class="listings">
+            <p class="empty-state">No active listings. Connect wallet to browse or list data.</p>
+        </div>
+    </section>
+
+    <footer>
+        <div class="footer-grid">
+            <div>
+                <h3>DataChain Africa</h3>
+                <p>Bringing transparency to mobile data in Nigeria.</p>
+            </div>
+            <div>
+                <h4>Resources</h4>
+                <ul>
+                    <li><a href="#">Docs</a></li>
+                    <li><a href="#">Smart Contracts</a></li>
+                    <li><a href="https://github.com/laykesydeoke/DataChainAfrica">GitHub</a></li>
+                </ul>
+            </div>
+        </div>
+        <p class="copyright">&copy; 2024 DataChain Africa. Built on Stacks.</p>
+    </footer>
+
+    <script src="app.js"></script>
+</body>
+</html>
