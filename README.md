@@ -1,94 +1,85 @@
 # DataChain Africa
 
-## Overview
-DataChain Africa is a blockchain-based solution built on the Stacks ecosystem that brings transparency and efficiency to mobile data consumption tracking and billing in Nigeria. The platform leverages blockchain technology to create an immutable record of data usage, enabling fair billing and innovative data management features.
+Blockchain-based mobile data tracking and billing for Nigeria. Built on the Stacks ecosystem to bring transparency to data consumption, enabling fair billing and peer-to-peer data trading.
 
-## Key Features
+## Features
+
 - Real-time data usage tracking with blockchain verification
-- Smart contract-based automated billing system
+- Smart contract automated billing and renewals
 - Transparent and immutable usage history
-- Peer-to-peer data package trading
-- Dynamic pricing based on usage patterns
-- Service quality monitoring and provider accountability
+- Peer-to-peer data package trading marketplace
+- Multiple plan types (daily, weekly, monthly)
 
-## Technical Architecture
-- **Blockchain**: Stacks 2.0+
-- **Smart Contract Language**: Clarity
-- **Integration**: Mobile carrier APIs
-- **Data Verification**: On-chain verification mechanisms
-- **Smart Contracts**: Automated billing and trading systems
+## Tech Stack
 
-## Use Cases
-1. **Individual Users**
-   - Track personal data usage in real-time
-   - View detailed consumption history
-   - Trade unused data packages
-   - Verify billing accuracy
+- **Blockchain**: Stacks
+- **Smart Contracts**: Clarity
+- **Frontend**: Static HTML/CSS/JS
+- **Testing**: Clarinet SDK
 
-2. **Mobile Carriers**
-   - Automated and transparent billing
-   - Reduced dispute resolution costs
-   - Enhanced customer trust
-   - Dynamic pricing implementation
+## Quick Start
 
-3. **Businesses**
-   - Manage team data allocations
-   - Monitor corporate data usage
-   - Automated expense reporting
-   - Bulk data package management
+```bash
+git clone https://github.com/laykesydeoke/DataChainAfrica.git
+cd DataChainAfrica
+```
 
-## Getting Started
-(Installation and setup instructions will be added as development progresses)
+Check contracts:
+```bash
+clarinet check
+```
 
-## Development Roadmap
-- [ ] Phase 1: Core infrastructure setup
-- [ ] Phase 2: Smart contract development
-- [ ] Phase 3: Mobile carrier integration
-- [ ] Phase 4: User interface development
-- [ ] Phase 5: Testing and security audits
-- [ ] Phase 6: Beta launch
+Run tests:
+```bash
+clarinet test
+```
+
+Start frontend:
+```bash
+cd frontend && npx serve .
+```
 
 ## Project Structure
 
 ```
-datachain-africa/
+DataChainAfrica/
 ├── contracts/
-│   ├── data-tracking.clar       # Core data tracking contract
-│   ├── billing.clar             # Billing and payment logic
-│   ├── marketplace.clar         # P2P data trading functionality
-│   └── traits/
-│       └── data-traits.clar     # Shared contract traits
-├── tests/
-│   ├── data-tracking_test.ts    # Unit tests for data tracking
-│   ├── billing_test.ts          # Unit tests for billing
-│   └── marketplace_test.ts      # Unit tests for marketplace
+│   ├── data-tracking.clar    # Core data usage tracking
+│   ├── billing.clar          # Billing and payments
+│   ├── marketplace.clar      # P2P data trading
+│   └── data-traits.clar      # Shared traits
 ├── frontend/
-│   ├── src/
-│   │   ├── components/
-│   │   ├── pages/
-│   │   └── services/
-│   └── public/
-├── scripts/
-│   ├── deploy.ts                # Deployment scripts
-│   └── setup-local.ts           # Local development setup
-├── lib/
-│   └── carrier-integration/     # Mobile carrier integration code
-├── docs/
-│   ├── api.md
-│   └── smart-contracts.md
-├── .gitignore
-├── package.json
-├── tsconfig.json
+│   ├── index.html            # Landing page with dashboard
+│   ├── styles.css            # Stylesheet
+│   └── app.js                # Wallet and contract integration
+├── tests/
+│   ├── data-tracking_test.ts
+│   ├── billing_test.ts
+│   ├── marketplace_test.ts
+│   └── data-traits_test.ts
+├── Clarinet.toml
 └── README.md
 ```
 
-## Contributing
-We welcome contributions from the community! Please read our contributing guidelines before submitting pull requests.
+## Smart Contracts
 
-<!-- ## Contact
-[Contact information to be added] -->
+- **data-tracking.clar** - Records and tracks data usage per user
+- **billing.clar** - Handles plan subscriptions, payments, renewals
+- **marketplace.clar** - Peer-to-peer data package trading
+- **data-traits.clar** - Shared interface traits
+
+## Roadmap
+
+- [x] Core smart contracts
+- [x] Frontend landing page
+- [ ] Mobile carrier integration
+- [ ] Mobile app
+- [ ] Beta launch
+
+## Team
+
+Lead Developer - Olalekan Akande
 
 ## Acknowledgments
+
 - Stacks Foundation
-- Nigerian Mobile Carriers
-- Contributing Developers
