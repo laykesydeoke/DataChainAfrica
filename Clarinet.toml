@@ -1,29 +1,32 @@
 [project]
-name = "."
+name = 'DataChainAfrica'
 authors = []
-description = ""
+description = 'Blockchain-based mobile data tracking for Africa'
 telemetry = false
 requirements = []
-cache_dir = "/home/runner/DataChainAfrica/DataChainAfrica/./.requirements"
-boot_contracts = ["pox", "costs-v2", "bns"]
+
 [contracts.billing]
-path = "contracts/billing.clar"
+path = 'contracts/billing.clar'
+clarity_version = 4
+epoch = 'latest'
 
 [contracts.data-tracking]
-path = "contracts/data-tracking.clar"
+path = 'contracts/data-tracking.clar'
+clarity_version = 4
+epoch = 'latest'
 
 [contracts.data-traits]
-path = "contracts/data-traits.clar"
+path = 'contracts/data-traits.clar'
+clarity_version = 4
+epoch = 'latest'
 
 [contracts.marketplace]
-path = "contracts/marketplace.clar"
-
-[repl]
-costs_version = 2
-parser_version = 2
+path = 'contracts/marketplace.clar'
+clarity_version = 4
+epoch = 'latest'
 
 [repl.analysis]
-passes = ["check_checker"]
+passes = ['check_checker']
 
 [repl.analysis.check_checker]
 strict = false
