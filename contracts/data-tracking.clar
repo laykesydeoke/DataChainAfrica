@@ -93,9 +93,9 @@
             { user: user }
             {
                 total-data-used: u0,
-                last-updated: block-height,
+                last-updated: stacks-block-height,
                 data-balance: (+ (get data-amount plan) rollover-amount),
-                plan-expiry: (+ block-height (get duration-blocks plan)),
+                plan-expiry: (+ stacks-block-height (get duration-blocks plan)),
                 plan-type: plan-id,
                 auto-renew: auto-renew,
                 rollover-data: u0
@@ -115,14 +115,14 @@
         )
         (asserts! (get is-authorized is-authorized) (err err-invalid-caller))
         (asserts! (<= usage (get data-balance current-data)) (err err-invalid-data))
-        (asserts! (< block-height (get plan-expiry current-data)) (err err-expired-plan))
+        (asserts! (< stacks-block-height (get plan-expiry current-data)) (err err-expired-plan))
         
         ;; Update usage data
         (map-set user-data-usage
             { user: user }
             {
                 total-data-used: (+ (get total-data-used current-data) usage),
-                last-updated: block-height,
+                last-updated: stacks-block-height,
                 data-balance: (- (get data-balance current-data) usage),
                 plan-expiry: (get plan-expiry current-data),
                 plan-type: (get plan-type current-data),
@@ -138,7 +138,7 @@
             {
                 user: user,
                 usage-amount: usage,
-                timestamp: block-height,
+                timestamp: stacks-block-height,
                 carrier: carrier,
                 remaining-balance: (- (get data-balance current-data) usage)
             }
@@ -153,16 +153,16 @@
             (current-data (unwrap! (map-get? user-data-usage { user: user }) (err err-invalid-data)))
             (current-plan (unwrap! (map-get? data-plans { plan-id: (get plan-type current-data) }) (err err-invalid-plan)))
         )
-        (asserts! (>= block-height (get plan-expiry current-data)) (err err-invalid-data))
+        (asserts! (>= stacks-block-height (get plan-expiry current-data)) (err err-invalid-data))
         
         (if (get auto-renew current-data)
             (ok (map-set user-data-usage
                 { user: user }
                 {
                     total-data-used: u0,
-                    last-updated: block-height,
+                    last-updated: stacks-block-height,
                     data-balance: (+ (get data-amount current-plan) (get data-balance current-data)),
-                    plan-expiry: (+ block-height (get duration-blocks current-plan)),
+                    plan-expiry: (+ stacks-block-height (get duration-blocks current-plan)),
                     plan-type: (get plan-type current-data),
                     auto-renew: true,
                     rollover-data: (get data-balance current-data)
@@ -172,9 +172,9 @@
                 { user: user }
                 {
                     total-data-used: (get total-data-used current-data),
-                    last-updated: block-height,
+                    last-updated: stacks-block-height,
                     data-balance: u0,
-                    plan-expiry: block-height,
+                    plan-expiry: stacks-block-height,
                     plan-type: (get plan-type current-data),
                     auto-renew: false,
                     rollover-data: u0
