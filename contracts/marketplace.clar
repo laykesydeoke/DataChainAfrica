@@ -61,7 +61,7 @@
                     seller: tx-sender,
                     data-amount: data-amount,
                     price: price,
-                    expiry: (+ block-height blocks-active),
+                    expiry: (+ stacks-block-height blocks-active),
                     is-active: true
                 }
             )
@@ -114,7 +114,7 @@
                           (err err-invalid-listing))))
         (begin
             (asserts! (get is-active listing) (err err-listing-expired))
-            (asserts! (<= block-height (get expiry listing)) (err err-listing-expired))
+            (asserts! (<= stacks-block-height (get expiry listing)) (err err-listing-expired))
             
             ;; Process payment with proper error handling
             (unwrap! (process-payment (get price listing) tx-sender (get seller listing))
@@ -160,7 +160,7 @@
 (define-read-only (is-listing-active (listing-id uint))
     (match (map-get? data-listings { listing-id: listing-id })
         listing (and (get is-active listing)
-                    (<= block-height (get expiry listing)))
+                    (<= stacks-block-height (get expiry listing)))
         false))
 
 (define-read-only (get-user-active-listings (user principal))
