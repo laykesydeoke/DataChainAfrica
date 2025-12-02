@@ -73,7 +73,7 @@
             ((discounted-price (if (> (get discount-rate subscription) u0)
                 (* price (- u100 (get discount-rate subscription))) 
                 price)))
-            (stx-transfer? discounted-price sender (as-contract tx-sender)))))
+            (stx-transfer? discounted-price sender contract-owner))))
 
 (define-private (record-subscription 
     (user principal) 
@@ -86,12 +86,12 @@
             { user: user }
             {
                 current-plan-id: plan-id,
-                last-payment: block-height,
+                last-payment: stacks-block-height,
                 payment-due: u0,
                 payment-status: true,
-                subscription-start: block-height,
+                subscription-start: stacks-block-height,
                 total-payments: price,
-                grace-period-end: (+ block-height (var-get grace-period-blocks)),
+                grace-period-end: (+ stacks-block-height (var-get grace-period-blocks)),
                 discount-rate: discount-rate
             }
         )
@@ -101,7 +101,7 @@
             {
                 user: user,
                 amount: price,
-                timestamp: block-height,
+                timestamp: stacks-block-height,
                 plan-id: plan-id,
                 status: true,
                 discount-applied: discount-rate
@@ -117,7 +117,7 @@
             { promo-id: promo-id }
             {
                 discount-percentage: discount,
-                valid-until: (+ block-height valid-blocks),
+                valid-until: (+ stacks-block-height valid-blocks),
                 min-subscription-months: min-months
             }
         ))))
@@ -134,7 +134,7 @@
             ((payment-id (+ (var-get payment-counter) u1))
              (discount-rate (if (and 
                                 (is-some promo)
-                                (< block-height (get valid-until (unwrap-panic promo))))
+                                (< stacks-block-height (get valid-until (unwrap-panic promo))))
                             (get discount-percentage (unwrap-panic promo))
                             u0)))
             (begin
@@ -164,7 +164,7 @@
                 (begin
                     (asserts! (not (get payment-status subscription)) 
                              (err err-payment-failed))
-                    (asserts! (<= block-height (get grace-period-end subscription))
+                    (asserts! (<= stacks-block-height (get grace-period-end subscription))
                              (err err-grace-period-expired))
                     (unwrap! (process-subscription-payment (get price plan-details) user)
                             (err err-payment-failed))
@@ -230,14 +230,14 @@
         {
             is-active: (and 
                         (get payment-status subscription)
-                        (<= block-height (get grace-period-end subscription))),
-            days-remaining: (/ (- (get grace-period-end subscription) block-height) u144),
+                        (<= stacks-block-height (get grace-period-end subscription))),
+            days-remaining: (/ (- (get grace-period-end subscription) stacks-block-height) u144),
             current-discount: (get discount-rate subscription)
         }))
 
 (define-read-only (is-promotion-valid (promo-id uint))
     (match (map-get? promotional-rates { promo-id: promo-id })
-        promo (> (get valid-until promo) block-height)
+        promo (> (get valid-until promo) stacks-block-height)
         false))
 
 (define-read-only (get-payment-details (payment-id uint))
