@@ -13,7 +13,7 @@ Blockchain-based mobile data tracking and billing for Nigeria. Built on the Stac
 ## Tech Stack
 
 - **Blockchain**: Stacks
-- **Smart Contracts**: Clarity
+- **Smart Contracts**: Clarity 4
 - **Frontend**: Static HTML/CSS/JS
 - **Testing**: Clarinet SDK
 
@@ -72,6 +72,7 @@ DataChainAfrica/
 
 - [x] Core smart contracts
 - [x] Frontend landing page
+- [x] Clarity 4 migration
 - [ ] Mobile carrier integration
 - [ ] Mobile app
 - [ ] Beta launch
