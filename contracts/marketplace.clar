@@ -37,9 +37,9 @@
 
 ;; Private Functions
 (define-private (process-payment (amount uint) (sender principal) (recipient principal))
-    (if (is-ok (stx-transfer? amount sender recipient))
-        (ok true)
-        (err err-insufficient-funds)))
+    (match (stx-transfer? amount sender recipient)
+        success (ok true)
+        error (err err-insufficient-funds)))
 
 ;; Public Functions
 (define-public (create-listing 
@@ -101,7 +101,9 @@
                     {
                         total-sales: (get total-sales current-sales),
                         total-data-sold: (get total-data-sold current-sales),
-                        active-listings: (- (get active-listings current-sales) u1)
+                        active-listings: (if (> (get active-listings current-sales) u0)
+                            (- (get active-listings current-sales) u1)
+                            u0)
                     }
                 ))
             (ok true))))
@@ -141,10 +143,12 @@
                         total-sales: (+ (get total-sales seller-stats) u1),
                         total-data-sold: (+ (get total-data-sold seller-stats) 
                                           (get data-amount listing)),
-                        active-listings: (- (get active-listings seller-stats) u1)
+                        active-listings: (if (> (get active-listings seller-stats) u0)
+                            (- (get active-listings seller-stats) u1)
+                            u0)
                     }
                 ))
-            
+
             (ok true))))
 
 ;; Read-only Functions
