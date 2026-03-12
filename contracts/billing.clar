@@ -71,7 +71,7 @@
         
         (let
             ((discounted-price (if (> (get discount-rate subscription) u0)
-                (* price (- u100 (get discount-rate subscription))) 
+                (/ (* price (- u100 (get discount-rate subscription))) u100)
                 price)))
             (stx-transfer? discounted-price sender contract-owner))))
 
@@ -151,25 +151,26 @@
                         (err err-invalid-plan))
                 (ok true)))))
 
-(define-public (process-renewal-payment (user principal) (tracking-contract <data-tracking-trait>))
-    (let 
-        ((subscription (unwrap! (map-get? user-subscriptions { user: user })
+(define-public (process-renewal-payment (tracking-contract <data-tracking-trait>))
+    (let
+        ((user tx-sender)
+         (subscription (unwrap! (map-get? user-subscriptions { user: tx-sender })
                                (err err-no-subscription))))
-        (let 
-            ((plan-details (unwrap! (contract-call? tracking-contract get-plan-details 
+        (let
+            ((plan-details (unwrap! (contract-call? tracking-contract get-plan-details
                                    (get current-plan-id subscription))
                                    (err err-invalid-plan))))
             (let
                 ((payment-id (+ (var-get payment-counter) u1)))
                 (begin
-                    (asserts! (not (get payment-status subscription)) 
+                    (asserts! (not (get payment-status subscription))
                              (err err-payment-failed))
                     (asserts! (<= stacks-block-height (get grace-period-end subscription))
                              (err err-grace-period-expired))
                     (unwrap! (process-subscription-payment (get price plan-details) user)
                             (err err-payment-failed))
-                    (record-subscription 
-                        user 
+                    (record-subscription
+                        user
                         (get current-plan-id subscription)
                         (get price plan-details)
                         payment-id
@@ -228,10 +229,12 @@
             }
             (map-get? user-subscriptions { user: user }))))
         {
-            is-active: (and 
+            is-active: (and
                         (get payment-status subscription)
                         (<= stacks-block-height (get grace-period-end subscription))),
-            days-remaining: (/ (- (get grace-period-end subscription) stacks-block-height) u144),
+            days-remaining: (if (> (get grace-period-end subscription) stacks-block-height)
+                (/ (- (get grace-period-end subscription) stacks-block-height) u144)
+                u0),
             current-discount: (get discount-rate subscription)
         }))
 

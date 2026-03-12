@@ -184,6 +184,76 @@
     )
 )
 
+;; Authorize a carrier to record usage
+(define-public (authorize-carrier (carrier principal))
+    (begin
+        (asserts! (is-eq tx-sender contract-owner) (err err-owner-only))
+        (ok (map-set authorized-carriers
+            { carrier: carrier }
+            { is-authorized: true }
+        ))
+    )
+)
+
+;; Revoke carrier authorization
+(define-public (revoke-carrier (carrier principal))
+    (begin
+        (asserts! (is-eq tx-sender contract-owner) (err err-owner-only))
+        (ok (map-set authorized-carriers
+            { carrier: carrier }
+            { is-authorized: false }
+        ))
+    )
+)
+
+;; Update an existing data plan
+(define-public (update-plan (plan-id uint) (data-amount uint) (duration-blocks uint) (price uint))
+    (begin
+        (asserts! (is-eq tx-sender contract-owner) (err err-owner-only))
+        (asserts! (is-some (map-get? data-plans { plan-id: plan-id })) (err err-invalid-plan))
+        (ok (map-set data-plans
+            { plan-id: plan-id }
+            {
+                data-amount: data-amount,
+                duration-blocks: duration-blocks,
+                price: price,
+                is-active: true
+            }
+        ))
+    )
+)
+
+;; Get usage data (trait-compatible wrapper)
+(define-public (get-usage (user principal))
+    (match (map-get? user-data-usage { user: user })
+        data (ok data)
+        (err err-invalid-data)
+    )
+)
+
+;; Get usage history by event id for a user
+(define-public (get-usage-history (user principal) (event-id uint))
+    (match (map-get? usage-events { event-id: event-id })
+        event (if (is-eq (get user event) user)
+            (ok {
+                usage-amount: (get usage-amount event),
+                timestamp: (get timestamp event),
+                carrier: (get carrier event),
+                remaining-balance: (get remaining-balance event)
+            })
+            (err err-invalid-data))
+        (err err-invalid-data)
+    )
+)
+
+;; Check if user's plan is still valid
+(define-public (check-plan-validity (user principal))
+    (match (map-get? user-data-usage { user: user })
+        data (ok (< stacks-block-height (get plan-expiry data)))
+        (err err-invalid-data)
+    )
+)
+
 ;; Read-only functions
 
 ;; Get user's current data usage and plan details
@@ -204,4 +274,10 @@
 ;; Get latest event ID
 (define-read-only (get-latest-event-id)
     (var-get event-counter)
+)
+
+;; Check if carrier is authorized
+(define-read-only (is-carrier-authorized (carrier principal))
+    (default-to false
+        (get is-authorized (map-get? authorized-carriers { carrier: carrier })))
 )

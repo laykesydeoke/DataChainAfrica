@@ -1,0 +1,16 @@
+{
+  "name": "datachainafrica",
+  "version": "1.0.0",
+  "description": "Blockchain-based mobile data tracking for Africa",
+  "private": true,
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "@hirosystems/clarinet-sdk": "^2.9.0",
+    "@stacks/transactions": "^7.0.0",
+    "vitest": "^2.1.8",
+    "vitest-environment-clarinet": "^2.2.0"
+  }
+}
