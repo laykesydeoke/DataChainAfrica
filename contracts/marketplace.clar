@@ -341,3 +341,7 @@
   (match (map-get? analytics-registry id)
     entry (get active entry)
     false))
+(define-read-only (get-analytics-owner (id uint))
+  (match (map-get? analytics-registry id)
+    entry (ok (get owner entry))
+    (err u631)))
