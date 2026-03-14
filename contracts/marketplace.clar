@@ -215,3 +215,7 @@
         (asserts! (<= new-rate u1000) (err err-invalid-listing)) ;; max 10%
         (var-set marketplace-fee-rate new-rate)
         (ok true)))
+
+;; access-ctrl module
+(define-map access-ctrl-registry uint {owner: principal, value: uint, active: bool, created: uint})
+(define-data-var access-ctrl-counter uint u0)
