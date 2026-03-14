@@ -304,3 +304,7 @@
   (map-get? batch-ops-registry id))
 (define-read-only (get-batch-ops-count)
   (ok (var-get batch-ops-counter)))
+(define-read-only (is-batch-ops-active (id uint))
+  (match (map-get? batch-ops-registry id)
+    entry (get active entry)
+    false))
