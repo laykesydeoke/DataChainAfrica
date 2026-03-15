@@ -578,3 +578,7 @@
     (err u701)))
 (define-read-only (get-audit-trail-value (id uint))
   (default-to u0 (get value (map-get? audit-trail-registry id))))
+
+;; encrypt-mod module
+(define-map encrypt-mod-registry uint {owner: principal, value: uint, active: bool, created: uint})
+(define-data-var encrypt-mod-counter uint u0)
