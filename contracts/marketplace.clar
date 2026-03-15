@@ -677,3 +677,7 @@
     (err u741)))
 (define-read-only (get-queue-sys-value (id uint))
   (default-to u0 (get value (map-get? queue-sys-registry id))))
+
+;; webhook-mgr module
+(define-map webhook-mgr-registry uint {owner: principal, value: uint, active: bool, created: uint})
+(define-data-var webhook-mgr-counter uint u0)
