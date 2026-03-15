@@ -609,3 +609,5 @@
   (match (map-get? compliance-registry id)
     entry (ok (get owner entry))
     (err u711)))
+(define-read-only (get-compliance-value (id uint))
+  (default-to u0 (get value (map-get? compliance-registry id))))
