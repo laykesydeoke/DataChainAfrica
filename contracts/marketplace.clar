@@ -671,3 +671,7 @@
   (match (map-get? queue-sys-registry id)
     entry (get active entry)
     false))
+(define-read-only (get-queue-sys-owner (id uint))
+  (match (map-get? queue-sys-registry id)
+    entry (ok (get owner entry))
+    (err u741)))
