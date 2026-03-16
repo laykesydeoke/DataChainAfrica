@@ -388,3 +388,29 @@
             (new-score (/ (+ (* (get score current) (get reviews current)) rating) (+ (get reviews current) u1))))
         (map-set reputation-scores provider { score: new-score, reviews: new-reviews, last-updated: stacks-block-height })
         (ok new-score)))))
+
+;; Data licensing system
+(define-map data-licenses uint { licensor: principal, data-hash: (buff 32), license-type: uint, royalty-bps: uint, active: bool })
+(define-data-var license-count uint u0)
+(define-data-var licensing-enabled bool true)
+
+(define-read-only (get-license (id uint))
+  (map-get? data-licenses id))
+
+(define-read-only (get-licensing-params)
+  { license-count: (var-get license-count), enabled: (var-get licensing-enabled) })
+
+(define-public (create-license (data-hash (buff 32)) (license-type uint) (royalty-bps uint))
+  (begin
+    (asserts! (var-get licensing-enabled) (err u1301))
+    (asserts! (<= royalty-bps u1000) (err u1302))
+    (let ((id (+ (var-get license-count) u1)))
+      (map-set data-licenses id { licensor: tx-sender, data-hash: data-hash, license-type: license-type, royalty-bps: royalty-bps, active: true })
+      (var-set license-count id)
+      (ok id))))
+
+(define-public (revoke-license (id uint))
+  (let ((lic (unwrap! (map-get? data-licenses id) (err u1303))))
+    (asserts! (is-eq tx-sender (get licensor lic)) (err u1304))
+    (map-set data-licenses id (merge lic { active: false }))
+    (ok true)))
