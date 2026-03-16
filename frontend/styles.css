@@ -617,6 +617,17 @@ html {
     color: var(--dark);
 }
 
+/* Listing expiry badge */
+.listing-expiry-badge {
+    display: inline-block;
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    background: var(--amber);
+    color: var(--white);
+    margin-left: 0.5rem;
+}
+
 /* Mobile */
 @media (max-width: 768px) {
     .nav { padding: 0.8rem 1.2rem; }
