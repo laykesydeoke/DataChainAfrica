@@ -397,6 +397,39 @@ footer {
     font-size: 0.82rem;
 }
 
+/* Nav active link */
+.nav-menu a.active {
+    color: var(--green);
+    font-weight: 600;
+}
+
+/* Section anchors smooth scroll */
+html {
+    scroll-behavior: smooth;
+}
+
+/* Cancel Subscription Button */
+.btn-cancel {
+    background: transparent;
+    color: var(--red);
+    border: 1px solid var(--red);
+    padding: 0.5rem 1.2rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.88rem;
+    transition: background 0.2s, color 0.2s;
+    margin-top: 1rem;
+}
+
+.btn-cancel:hover {
+    background: var(--red);
+    color: var(--white);
+}
+
+.sub-actions {
+    margin-top: 1rem;
+}
+
 /* Analytics Section */
 .analytics {
     padding: 3rem 2rem;

@@ -1,0 +1,24 @@
+name: Subscription Tests
+
+on:
+  push:
+    branches: [main, 'feat/**']
+  pull_request:
+    branches: [main]
+
+jobs:
+  subscription-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm ci
+      - name: Run subscription tests
+        run: npm run test:subscriptions
+      - name: Run admin tests
+        run: npm run test:admin
+      - name: Run listing tests
+        run: npm run test:listings

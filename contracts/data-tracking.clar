@@ -210,6 +210,22 @@
                 }
             )))))
 
+;; Allow user to toggle auto-renew for their own subscription
+(define-public (set-auto-renew (enabled bool))
+    (let ((current (unwrap! (map-get? user-data-usage { user: tx-sender }) (err err-invalid-data))))
+        (ok (map-set user-data-usage
+            { user: tx-sender }
+            {
+                total-data-used: (get total-data-used current),
+                last-updated: (get last-updated current),
+                data-balance: (get data-balance current),
+                plan-expiry: (get plan-expiry current),
+                plan-type: (get plan-type current),
+                auto-renew: enabled,
+                rollover-data: (get rollover-data current)
+            }
+        ))))
+
 ;; Authorize a carrier to record usage
 (define-public (authorize-carrier (carrier principal))
     (begin

@@ -13,6 +13,9 @@
     "test:analytics": "vitest run tests/revenue_tracking_test.ts tests/network_stats_test.ts tests/buyer_stats_test.ts",
     "test:stats": "vitest run tests/marketplace_stats_test.ts tests/subscription_analytics_test.ts",
     "test:history": "vitest run tests/payment_history_test.ts tests/grace_period_test.ts",
+    "test:admin": "vitest run tests/billing_admin_test.ts tests/marketplace_admin_test.ts tests/data_tracking_admin_test.ts",
+    "test:subscriptions": "vitest run tests/cancel_subscription_test.ts tests/set_auto_renew_test.ts tests/multi_subscriber_test.ts",
+    "test:listings": "vitest run tests/listing_lifecycle_test.ts tests/update_listing_price_test.ts",
     "lint": "echo 'No linter configured'",
     "check": "clarinet check"
   },

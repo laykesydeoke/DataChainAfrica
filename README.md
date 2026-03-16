@@ -15,6 +15,9 @@ Blockchain-based mobile data tracking and billing for Nigeria. Built on the Stac
 - On-chain platform analytics (revenue, subscribers, data recorded)
 - Buyer history and per-user payment tracking
 - Network usage summary across all carriers
+- Subscription cancellation with grace period
+- Seller listing price updates
+- User-controlled auto-renew toggle
 
 ## Tech Stack
 
@@ -125,6 +128,9 @@ Contract owners have access to the following admin functions:
 - [x] CI/CD pipeline
 - [x] On-chain analytics and buyer history tracking
 - [x] Network usage summary
+- [x] Subscription cancellation
+- [x] Listing price updates
+- [x] Auto-renew toggle
 - [ ] Mobile carrier integration
 - [ ] Mobile app
 - [ ] Beta launch
