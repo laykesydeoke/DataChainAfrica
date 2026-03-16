@@ -181,6 +181,58 @@ function loadPlatformStats() {
         });
 }
 
+function loadAnalyticsDashboard() {
+    Promise.all([
+        callReadOnly('billing', 'get-platform-summary', []),
+        callReadOnly('data-tracking', 'get-network-summary', [])
+    ]).then(function (results) {
+        var billing = results[0] && results[0].okay ? parseClarityValue(results[0].result) : {};
+        var network = results[1] && results[1].okay ? parseClarityValue(results[1].result) : {};
+
+        var revEl = document.getElementById('analyticRevenue');
+        var subEl = document.getElementById('analyticSubscribers');
+        var dataEl = document.getElementById('analyticDataRecorded');
+        var usersEl = document.getElementById('analyticUsers');
+
+        if (revEl && billing['total-revenue'] !== undefined) {
+            revEl.textContent = (billing['total-revenue'] / 1000000).toFixed(2) + ' STX';
+        }
+        if (subEl && billing['total-subscribers'] !== undefined) {
+            subEl.textContent = billing['total-subscribers'];
+        }
+        if (dataEl && network['total-data-recorded'] !== undefined) {
+            dataEl.textContent = network['total-data-recorded'] + ' MB';
+        }
+        if (usersEl && network['total-unique-users'] !== undefined) {
+            usersEl.textContent = network['total-unique-users'];
+        }
+    }).catch(function () {
+        // Silently fail
+    });
+}
+
+function loadUserAnalytics(address) {
+    callReadOnly('billing', 'get-user-payment-count', [
+        '0x' + principalToHex(address)
+    ]).then(function (data) {
+        if (!data || !data.okay) return;
+        var count = parseClarityUint(data.result);
+        var el = document.getElementById('userPaymentCount');
+        if (el) el.textContent = count;
+    }).catch(function () {});
+
+    callReadOnly('marketplace', 'get-buyer-stats', [
+        '0x' + principalToHex(address)
+    ]).then(function (data) {
+        if (!data || !data.okay) return;
+        var stats = parseClarityValue(data.result);
+        var el = document.getElementById('userBoughtData');
+        if (el && stats['total-data-bought'] !== undefined) {
+            el.textContent = stats['total-data-bought'] + ' MB';
+        }
+    }).catch(function () {});
+}
+
 function subscribeToPlan(planId) {
     if (!userAddress) {
         alert('Please connect your wallet first');
