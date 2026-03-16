@@ -173,6 +173,17 @@
 
             (var-set event-counter event-id)
             (var-set total-data-recorded (+ (var-get total-data-recorded) usage))
+            (let ((prev-stats (default-to
+                        { total-usage-reported: u0, total-events: u0, last-report-block: u0 }
+                        (map-get? carrier-stats { carrier: carrier }))))
+                (map-set carrier-stats
+                    { carrier: carrier }
+                    {
+                        total-usage-reported: (+ (get total-usage-reported prev-stats) usage),
+                        total-events: (+ (get total-events prev-stats) u1),
+                        last-report-block: stacks-block-height
+                    }
+                ))
             (ok (map-set usage-events
                 { event-id: event-id }
                 {
