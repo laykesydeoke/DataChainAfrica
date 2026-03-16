@@ -48,7 +48,9 @@
     "test:validators": "vitest run tests/val_default_test.ts tests/val_earn_test.ts tests/val_full_test.ts",
     "test:val-edge": "vitest run tests/val_edge_test.ts tests/val_invariant_test.ts tests/val_coexist_test.ts",
     "test:insurance": "vitest run tests/ins_default_test.ts tests/ins_contribute_test.ts tests/ins_full_test.ts",
-    "test:ins-edge": "vitest run tests/ins_edge_test.ts tests/ins_invariant_test.ts tests/ins_coexist_test.ts"
+    "test:ins-edge": "vitest run tests/ins_edge_test.ts tests/ins_invariant_test.ts tests/ins_coexist_test.ts",
+    "test:sub-tiers": "vitest run tests/tier_sub_default_test.ts tests/tier_sub_upgrade_test.ts tests/tier_sub_full_test.ts",
+    "test:sub-tier-edge": "vitest run tests/tier_sub_edge_test.ts tests/tier_sub_invariant_test.ts tests/tier_sub_coexist_test.ts"
   },
   "devDependencies": {
     "@hirosystems/clarinet-sdk": "^2.9.0",
