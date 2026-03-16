@@ -13,6 +13,11 @@
 (define-constant err-no-subscription (err u204))
 (define-constant err-grace-period-expired (err u205))
 (define-constant err-invalid-discount (err u206))
+(define-constant err-contract-paused (err u207))
+(define-constant err-invalid-amount (err u208))
+
+;; State
+(define-data-var is-paused bool false)
 
 ;; Data Structures
 (define-map user-subscriptions
@@ -24,8 +29,8 @@
         payment-status: bool,
         subscription-start: uint,
         total-payments: uint,
-        grace-period-end: uint,     
-        discount-rate: uint         
+        grace-period-end: uint,
+        discount-rate: uint
     }
 )
 
@@ -37,7 +42,7 @@
         timestamp: uint,
         plan-id: uint,
         status: bool,
-        discount-applied: uint      
+        discount-applied: uint
     }
 )
 
@@ -68,16 +73,16 @@
                 discount-rate: u0
             }
             (map-get? user-subscriptions { user: sender }))))
-        
+
         (let
             ((discounted-price (if (> (get discount-rate subscription) u0)
                 (/ (* price (- u100 (get discount-rate subscription))) u100)
                 price)))
             (stx-transfer? discounted-price sender contract-owner))))
 
-(define-private (record-subscription 
-    (user principal) 
-    (plan-id uint) 
+(define-private (record-subscription
+    (user principal)
+    (plan-id uint)
     (price uint)
     (payment-id uint)
     (discount-rate uint))
@@ -95,7 +100,7 @@
                 discount-rate: discount-rate
             }
         )
-        
+
         (map-set payment-history
             { payment-id: payment-id }
             {
@@ -108,7 +113,18 @@
             }
         )))
 
-;; Public Functions
+;; Admin Functions
+(define-public (set-paused (paused bool))
+    (begin
+        (asserts! (is-eq tx-sender contract-owner) (err err-owner-only))
+        (ok (var-set is-paused paused))))
+
+(define-public (update-grace-period (blocks uint))
+    (begin
+        (asserts! (is-eq tx-sender contract-owner) (err err-owner-only))
+        (asserts! (> blocks u0) (err err-invalid-amount))
+        (ok (var-set grace-period-blocks blocks))))
+
 (define-public (set-promotional-rate (promo-id uint) (discount uint) (valid-blocks uint) (min-months uint))
     (begin
         (asserts! (is-eq tx-sender contract-owner) (err err-owner-only))
@@ -122,63 +138,71 @@
             }
         ))))
 
-(define-public (subscribe-and-pay 
-    (plan-id uint) 
+;; Public Functions
+(define-public (subscribe-and-pay
+    (plan-id uint)
     (tracking-contract <data-tracking-trait>)
     (promo-id uint))
-    (let 
-        ((plan-details (unwrap! (contract-call? tracking-contract get-plan-details plan-id) 
-                               (err err-invalid-plan)))
-         (promo (map-get? promotional-rates { promo-id: promo-id })))
+    (begin
+        (asserts! (not (var-get is-paused)) (err err-contract-paused))
         (let
-            ((payment-id (+ (var-get payment-counter) u1))
-             (discount-rate (if (and 
-                                (is-some promo)
-                                (< stacks-block-height (get valid-until (unwrap-panic promo))))
-                            (get discount-percentage (unwrap-panic promo))
-                            u0)))
-            (begin
-                (unwrap! (process-subscription-payment (get price plan-details) tx-sender)
-                        (err err-payment-failed))
-                (record-subscription 
-                    tx-sender 
-                    plan-id 
-                    (get price plan-details) 
-                    payment-id
-                    discount-rate)
-                (var-set payment-counter payment-id)
-                (unwrap! (contract-call? tracking-contract subscribe-to-plan plan-id true)
-                        (err err-invalid-plan))
-                (ok true)))))
-
-(define-public (process-renewal-payment (tracking-contract <data-tracking-trait>))
-    (let
-        ((user tx-sender)
-         (subscription (unwrap! (map-get? user-subscriptions { user: tx-sender })
-                               (err err-no-subscription))))
-        (let
-            ((plan-details (unwrap! (contract-call? tracking-contract get-plan-details
-                                   (get current-plan-id subscription))
-                                   (err err-invalid-plan))))
+            ((plan-details (unwrap! (contract-call? tracking-contract get-plan-details plan-id)
+                                   (err err-invalid-plan)))
+             (promo (map-get? promotional-rates { promo-id: promo-id })))
             (let
-                ((payment-id (+ (var-get payment-counter) u1)))
+                ((payment-id (+ (var-get payment-counter) u1))
+                 (discount-rate (if (and
+                                    (is-some promo)
+                                    (< stacks-block-height (get valid-until (unwrap-panic promo))))
+                                (get discount-percentage (unwrap-panic promo))
+                                u0)))
                 (begin
-                    (asserts! (not (get payment-status subscription))
-                             (err err-payment-failed))
-                    (asserts! (<= stacks-block-height (get grace-period-end subscription))
-                             (err err-grace-period-expired))
-                    (unwrap! (process-subscription-payment (get price plan-details) user)
+                    (unwrap! (process-subscription-payment (get price plan-details) tx-sender)
                             (err err-payment-failed))
                     (record-subscription
-                        user
-                        (get current-plan-id subscription)
+                        tx-sender
+                        plan-id
                         (get price plan-details)
                         payment-id
-                        (get discount-rate subscription))
+                        discount-rate)
                     (var-set payment-counter payment-id)
+                    (unwrap! (contract-call? tracking-contract subscribe-to-plan plan-id true)
+                            (err err-invalid-plan))
                     (ok true))))))
 
+(define-public (process-renewal-payment (tracking-contract <data-tracking-trait>))
+    (begin
+        (asserts! (not (var-get is-paused)) (err err-contract-paused))
+        (let
+            ((user tx-sender)
+             (subscription (unwrap! (map-get? user-subscriptions { user: tx-sender })
+                                   (err err-no-subscription))))
+            (let
+                ((plan-details (unwrap! (contract-call? tracking-contract get-plan-details
+                                       (get current-plan-id subscription))
+                                       (err err-invalid-plan))))
+                (let
+                    ((payment-id (+ (var-get payment-counter) u1)))
+                    (begin
+                        (asserts! (not (get payment-status subscription))
+                                 (err err-payment-failed))
+                        (asserts! (<= stacks-block-height (get grace-period-end subscription))
+                                 (err err-grace-period-expired))
+                        (unwrap! (process-subscription-payment (get price plan-details) user)
+                                (err err-payment-failed))
+                        (record-subscription
+                            user
+                            (get current-plan-id subscription)
+                            (get price plan-details)
+                            payment-id
+                            (get discount-rate subscription))
+                        (var-set payment-counter payment-id)
+                        (ok true)))))))
+
 ;; Read-only Functions
+(define-read-only (get-paused)
+    (var-get is-paused))
+
 (define-read-only (get-subscription (user principal))
     (map-get? user-subscriptions { user: user }))
 
@@ -193,7 +217,7 @@
 
 (define-read-only (is-payment-due (user principal))
     (let
-        ((subscription (default-to 
+        ((subscription (default-to
             {
                 current-plan-id: u0,
                 last-payment: u0,
@@ -209,7 +233,7 @@
 
 (define-read-only (get-user-payment (payment-id uint) (user principal))
     (let ((payment (map-get? payment-history { payment-id: payment-id })))
-        (if (and 
+        (if (and
             (is-some payment)
             (is-eq (get user (unwrap-panic payment)) user))
             payment
@@ -254,3 +278,6 @@
             discount-applied: u0
         }
         (map-get? payment-history { payment-id: payment-id })))
+
+(define-read-only (get-total-payments)
+    (var-get payment-counter))
