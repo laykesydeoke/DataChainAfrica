@@ -639,3 +639,35 @@ html {
     .footer-grid { flex-direction: column; gap: 1.5rem; }
     .stats-grid { gap: 2rem; flex-wrap: wrap; }
 }
+
+/* Governance dashboard */
+#governance {
+    background: #0f1922;
+    border: 1px solid #1e3a52;
+    border-radius: 8px;
+    padding: 1.5rem;
+}
+
+#governance h2 {
+    color: #00c896;
+    margin-bottom: 1rem;
+    font-size: 1.1rem;
+    letter-spacing: 0.03em;
+}
+
+.gov-status-badge {
+    display: inline-block;
+    padding: 0.2rem 0.6rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    background: #1a2e1a;
+    color: #00a651;
+    border: 1px solid #00a651;
+}
+
+.gov-status-badge.inactive {
+    background: #2e1a1a;
+    color: #a65100;
+    border-color: #a65100;
+}
