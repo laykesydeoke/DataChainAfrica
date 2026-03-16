@@ -422,3 +422,39 @@
     (asserts! (<= rate u1000) (err u903))
     (var-set insurance-rate-bps rate)
     (ok true)))
+
+;; Protocol treasury management
+(define-data-var treasury-balance uint u0)
+(define-data-var treasury-fee-bps uint u50)
+(define-data-var treasury-admin principal (var-get contract-owner))
+(define-map treasury-allocations uint { purpose: (string-ascii 64), amount: uint, allocated-at: uint })
+(define-data-var allocation-count uint u0)
+
+(define-read-only (get-treasury-params)
+  { balance: (var-get treasury-balance), fee-bps: (var-get treasury-fee-bps) })
+
+(define-read-only (get-treasury-allocation (id uint))
+  (map-get? treasury-allocations id))
+
+(define-public (contribute-to-treasury (amount uint))
+  (begin
+    (asserts! (> amount u0) (err u1201))
+    (var-set treasury-balance (+ (var-get treasury-balance) amount))
+    (ok true)))
+
+(define-public (set-treasury-fee (fee uint))
+  (begin
+    (asserts! (is-eq tx-sender (var-get contract-owner)) (err u1200))
+    (asserts! (<= fee u500) (err u1202))
+    (var-set treasury-fee-bps fee)
+    (ok true)))
+
+(define-public (allocate-treasury (purpose (string-ascii 64)) (amount uint))
+  (begin
+    (asserts! (is-eq tx-sender (var-get contract-owner)) (err u1200))
+    (asserts! (<= amount (var-get treasury-balance)) (err u1203))
+    (let ((id (+ (var-get allocation-count) u1)))
+      (map-set treasury-allocations id { purpose: purpose, amount: amount, allocated-at: stacks-block-height })
+      (var-set treasury-balance (- (var-get treasury-balance) amount))
+      (var-set allocation-count id)
+      (ok id))))
