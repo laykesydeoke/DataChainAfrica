@@ -203,3 +203,13 @@ Stake data tokens to earn protocol rewards:
 npm run test:staking
 npm run test:staking-edge
 ```
+
+## Node Registry
+
+Operator node registration:
+- Register nodes with type
+- Track active operators
+
+```bash
+npm run test:nodes
+```
