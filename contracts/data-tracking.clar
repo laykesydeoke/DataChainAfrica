@@ -19,6 +19,8 @@
 
 ;; State
 (define-data-var is-paused bool false)
+(define-data-var total-data-recorded uint u0)
+(define-data-var total-unique-users uint u0)
 
 ;; Data Structures
 (define-map user-data-usage
@@ -116,6 +118,9 @@
                     u0))
             )
             (asserts! (get is-active plan) (err err-plan-inactive))
+            (if (is-none current-usage)
+                (var-set total-unique-users (+ (var-get total-unique-users) u1))
+                true)
             (ok (map-set user-data-usage
                 { user: user }
                 {
@@ -158,6 +163,7 @@
             )
 
             (var-set event-counter event-id)
+            (var-set total-data-recorded (+ (var-get total-data-recorded) usage))
             (ok (map-set usage-events
                 { event-id: event-id }
                 {
@@ -285,3 +291,17 @@
 (define-read-only (is-carrier-authorized (carrier principal))
     (default-to false
         (get is-authorized (map-get? authorized-carriers { carrier: carrier }))))
+
+(define-read-only (get-total-data-recorded)
+    (var-get total-data-recorded))
+
+(define-read-only (get-total-unique-users)
+    (var-get total-unique-users))
+
+(define-read-only (get-network-summary)
+    {
+        total-data-recorded: (var-get total-data-recorded),
+        total-unique-users: (var-get total-unique-users),
+        total-events: (var-get event-counter),
+        total-plans: (var-get plan-counter)
+    })
