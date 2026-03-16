@@ -2,6 +2,22 @@ var API_URL = 'https://api.testnet.hiro.so';
 var CONTRACT_ADDRESS = 'ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM';
 var userAddress = null;
 
+function loadGovernanceDashboard(address) {
+    if (!address) return;
+    Promise.all([
+        callReadOnly('data-tracking', 'get-user-plan-type', [principalCV(address)]),
+        callReadOnly('data-tracking', 'get-plan-expiry', [principalCV(address)]),
+        callReadOnly('data-tracking', 'get-user-auto-renew', [principalCV(address)])
+    ]).then(function (results) {
+        var planType = document.getElementById('govPlanType');
+        var planExpiry = document.getElementById('govPlanExpiry');
+        var autoRenew = document.getElementById('govAutoRenew');
+        if (planType) planType.textContent = parseClarityUint(results[0] && results[0].result) || '--';
+        if (planExpiry) planExpiry.textContent = parseClarityUint(results[1] && results[1].result) || '--';
+        if (autoRenew) autoRenew.textContent = parseClarityBool(results[2] && results[2].result) ? 'On' : 'Off';
+    }).catch(function () {});
+}
+
 document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('walletBtn').addEventListener('click', handleWalletClick);
 

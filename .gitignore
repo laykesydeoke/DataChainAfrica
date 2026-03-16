@@ -31,3 +31,9 @@ payment-exports/
 billing-reports/
 marketplace-exports/
 analytics-snapshots/
+governance-exports/
+audit-logs/
+consent-records/
+compliance-reports/
+*.audit.json
+operator-keys/
