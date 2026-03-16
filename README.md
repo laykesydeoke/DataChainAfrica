@@ -74,6 +74,13 @@ npm run test:billing-flow
 npm run test:billing-grace
 ```
 
+Run marketplace analytics tests:
+```bash
+npm run test:marketplace-analytics
+npm run test:buyer-stats
+npm run test:seller-stats
+```
+
 Start frontend:
 ```bash
 cd frontend && npx serve .
