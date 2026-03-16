@@ -223,3 +223,13 @@ Incentivize data providers:
 ```bash
 npm run test:bounties
 ```
+
+## Validator Rewards
+
+Reward validators for participation:
+- Accrue per-block rewards
+- Claim accrued amounts
+
+```bash
+npm run test:validators
+```
