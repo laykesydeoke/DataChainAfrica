@@ -213,3 +213,13 @@ Operator node registration:
 ```bash
 npm run test:nodes
 ```
+
+## Data Bounties
+
+Incentivize data providers:
+- Post rewards for data
+- Fulfill and claim rewards
+
+```bash
+npm run test:bounties
+```
