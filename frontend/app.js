@@ -610,3 +610,8 @@ async function loadTierThresholds() {
   const r = await callReadOnly("data-tracking", "get-tier-thresholds", []);
   if (r) document.getElementById("tier-data").textContent = JSON.stringify(r);
 }
+
+async function loadReputation() {
+  const r = await callReadOnly("marketplace", "get-reputation-params", []);
+  if (r) document.getElementById("rep-data").textContent = JSON.stringify(r);
+}
