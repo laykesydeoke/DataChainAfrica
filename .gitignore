@@ -45,3 +45,5 @@ staking-logs/
 stake-snapshots/
 node-registry-cache/
 node-logs/
+bounty-logs/
+bounty-cache/
