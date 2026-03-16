@@ -191,3 +191,15 @@ Lead Developer - Olalekan Akande
 ## Acknowledgments
 
 - Stacks Foundation
+
+## Data Staking
+
+Stake data tokens to earn protocol rewards:
+
+- **Stake Data**: Lock tokens for rewards
+- **Reward Rate**: Configurable basis points
+
+```bash
+npm run test:staking
+npm run test:staking-edge
+```
