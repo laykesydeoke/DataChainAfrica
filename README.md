@@ -81,6 +81,17 @@ npm run test:buyer-stats
 npm run test:seller-stats
 ```
 
+## Smart Contract Features
+
+### Marketplace
+
+- Create, cancel, extend, and reprice listings
+- Self-purchase protection
+- Platform fee configuration (max 10%)
+- On-chain volume and trade tracking
+- Per-seller and per-buyer analytics
+- Marketplace summary aggregate view
+
 Start frontend:
 ```bash
 cd frontend && npx serve .
