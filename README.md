@@ -23,6 +23,12 @@ Blockchain-based mobile data tracking and billing for Nigeria. Built on the Stac
 - Complete API reference documentation
 - Grace period countdown display in dashboard
 - Payment record queries and revenue in STX units
+- On-chain data governance and compliance tools
+- User rights and consent management
+- Plan lifecycle governance (activate/deactivate)
+- Carrier revocation and access control
+- Data retention audit trail
+- Operator governance dashboard
 
 ## Tech Stack
 
