@@ -119,6 +119,44 @@ function onConnected(address) {
     loadDashboard(address);
     loadMarketplace();
     loadPlatformStats();
+    loadAnalyticsDashboard();
+    loadUserAnalytics(address);
+
+    var userAnalyticsSection = document.getElementById('userAnalytics');
+    if (userAnalyticsSection) userAnalyticsSection.style.display = 'block';
+
+    var cancelBtn = document.getElementById('cancelSubBtn');
+    if (cancelBtn) cancelBtn.style.display = 'inline-block';
+}
+
+function cancelSubscription() {
+    if (!userAddress) {
+        alert('Please connect your wallet first');
+        return;
+    }
+
+    var txOptions = {
+        contractAddress: CONTRACT_ADDRESS,
+        contractName: 'billing',
+        functionName: 'cancel-subscription',
+        functionArgs: [],
+        appDetails: {
+            name: 'DataChain Africa',
+            icon: window.location.origin + '/favicon.svg'
+        },
+        onFinish: function (data) {
+            showToast('Cancellation submitted! TX: ' + data.txId.slice(0, 10) + '...');
+        },
+        onCancel: function () {
+            console.log('Cancellation declined');
+        }
+    };
+
+    if (window.openContractCall) {
+        window.openContractCall(txOptions);
+    } else if (window.StacksConnect && window.StacksConnect.openContractCall) {
+        window.StacksConnect.openContractCall(txOptions);
+    }
 }
 
 function loadDashboard(address) {
