@@ -342,6 +342,17 @@
         total-plans: (var-get plan-counter)
     })
 
+(define-read-only (get-carrier-stats (carrier principal))
+    (default-to
+        { total-usage-reported: u0, total-events: u0, last-report-block: u0 }
+        (map-get? carrier-stats { carrier: carrier })))
+
+(define-read-only (get-carrier-total-usage (carrier principal))
+    (get total-usage-reported
+        (default-to
+            { total-usage-reported: u0, total-events: u0, last-report-block: u0 }
+            (map-get? carrier-stats { carrier: carrier }))))
+
 (define-read-only (has-active-subscription (user principal))
     (match (map-get? user-data-usage { user: user })
         data (< stacks-block-height (get plan-expiry data))
