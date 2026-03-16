@@ -341,3 +341,29 @@
     (asserts! (is-eq tx-sender (var-get contract-owner)) (err u500))
     (var-set staking-enabled enabled)
     (ok true)))
+
+;; Data bounty system
+(define-map data-bounties uint { creator: principal, reward: uint, fulfilled: bool, created-at: uint })
+(define-data-var bounty-count uint u0)
+(define-data-var total-bounty-pool uint u0)
+
+(define-read-only (get-bounty (id uint))
+  (map-get? data-bounties id))
+
+(define-read-only (get-bounty-stats)
+  { bounty-count: (var-get bounty-count), total-pool: (var-get total-bounty-pool) })
+
+(define-public (create-bounty (reward uint))
+  (begin
+    (asserts! (> reward u0) (err u701))
+    (let ((id (+ (var-get bounty-count) u1)))
+      (map-set data-bounties id { creator: tx-sender, reward: reward, fulfilled: false, created-at: stacks-block-height })
+      (var-set bounty-count id)
+      (var-set total-bounty-pool (+ (var-get total-bounty-pool) reward))
+      (ok id))))
+
+(define-public (fulfill-bounty (id uint))
+  (let ((bounty (unwrap! (map-get? data-bounties id) (err u702))))
+    (asserts! (not (get fulfilled bounty)) (err u703))
+    (map-set data-bounties id (merge bounty { fulfilled: true }))
+    (ok true)))
