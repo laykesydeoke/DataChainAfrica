@@ -563,6 +563,45 @@ html {
     color: var(--green);
 }
 
+/* Grace Period Alert */
+.grace-alert {
+    background: #fff3cd;
+    border: 1px solid #ffc107;
+    border-radius: 6px;
+    padding: 0.6rem 1rem;
+    font-size: 0.85rem;
+    color: #856404;
+    margin-top: 0.5rem;
+    display: none;
+}
+
+.grace-alert.visible {
+    display: block;
+}
+
+.grace-countdown {
+    font-weight: 600;
+    color: var(--red);
+}
+
+/* Revenue display */
+.revenue-card {
+    background: linear-gradient(135deg, var(--green), var(--green-dark));
+    color: var(--white);
+    border-radius: 10px;
+    padding: 1.5rem;
+    text-align: center;
+}
+
+.revenue-card .analytic-value {
+    color: var(--white);
+    font-size: 2rem;
+}
+
+.revenue-card .analytic-label {
+    color: rgba(255,255,255,0.8);
+}
+
 /* Mobile */
 @media (max-width: 768px) {
     .nav { padding: 0.8rem 1.2rem; }
