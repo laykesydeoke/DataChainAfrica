@@ -577,3 +577,11 @@ function parseClarityValue(val) {
     if (typeof val === 'object') return val;
     return {};
 }
+
+// Data staking
+async function loadStakingParams() {
+  const result = await callReadOnly('marketplace', 'get-staking-params', []);
+  if (result) {
+    document.getElementById('staking-params').textContent = JSON.stringify(result);
+  }
+}
