@@ -51,3 +51,5 @@ validator-logs/
 reward-cache/
 insurance-logs/
 insurance-cache/
+tier-cache/
+tier-logs/
