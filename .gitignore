@@ -53,3 +53,5 @@ insurance-logs/
 insurance-cache/
 tier-cache/
 tier-logs/
+reputation-cache/
+review-logs/
