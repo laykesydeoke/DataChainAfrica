@@ -10,3 +10,9 @@ dist/
 coverage/
 *.log
 .DS_Store
+*.tmp
+*.bak
+.vitest-cache/
+test-results/
+.nyc_output/
+reports/

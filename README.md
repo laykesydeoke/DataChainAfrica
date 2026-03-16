@@ -12,6 +12,9 @@ Blockchain-based mobile data tracking and billing for Nigeria. Built on the Stac
 - Emergency pause controls for contract admins
 - Platform fee configuration for marketplace trades
 - Self-purchase protection for marketplace listings
+- On-chain platform analytics (revenue, subscribers, data recorded)
+- Buyer history and per-user payment tracking
+- Network usage summary across all carriers
 
 ## Tech Stack
 
@@ -47,6 +50,13 @@ Run per-contract tests:
 npm run test:billing
 npm run test:tracking
 npm run test:marketplace
+```
+
+Run analytics tests:
+```bash
+npm run test:analytics
+npm run test:stats
+npm run test:history
 ```
 
 Start frontend:
@@ -113,6 +123,8 @@ Contract owners have access to the following admin functions:
 - [x] Emergency pause mechanism
 - [x] Platform fee for marketplace
 - [x] CI/CD pipeline
+- [x] On-chain analytics and buyer history tracking
+- [x] Network usage summary
 - [ ] Mobile carrier integration
 - [ ] Mobile app
 - [ ] Beta launch

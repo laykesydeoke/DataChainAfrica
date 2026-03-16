@@ -17,9 +17,9 @@
 
 ;; State
 (define-data-var is-paused bool false)
-(define-data-var platform-fee-pct uint u2)      ;; 2% platform fee
-(define-data-var total-volume-stx uint u0)       ;; total platform volume
-(define-data-var total-trades uint u0)           ;; total completed trades
+(define-data-var platform-fee-pct uint u2)
+(define-data-var total-volume-stx uint u0)
+(define-data-var total-trades uint u0)
 
 ;; Data Structures
 (define-map data-listings
@@ -39,6 +39,16 @@
         total-sales: uint,
         total-data-sold: uint,
         active-listings: uint
+    }
+)
+
+;; New: Buyer history tracking
+(define-map user-purchases
+    { user: principal }
+    {
+        total-purchases: uint,
+        total-data-bought: uint,
+        total-spent: uint
     }
 )
 
@@ -62,7 +72,7 @@
 (define-public (set-platform-fee (fee-pct uint))
     (begin
         (asserts! (is-eq tx-sender contract-owner) (err err-owner-only))
-        (asserts! (<= fee-pct u10) (err err-invalid-fee))  ;; Max 10%
+        (asserts! (<= fee-pct u10) (err err-invalid-fee))
         (ok (var-set platform-fee-pct fee-pct))))
 
 ;; Public Functions
@@ -149,15 +159,12 @@
 
                 (let ((fee (calculate-fee (get price listing)))
                       (seller-amount (- (get price listing) (calculate-fee (get price listing)))))
-                    ;; Pay seller (minus fee)
                     (unwrap! (process-payment seller-amount tx-sender (get seller listing))
                             (err err-insufficient-funds))
-                    ;; Pay platform fee to contract owner
                     (if (> fee u0)
                         (unwrap! (process-payment fee tx-sender contract-owner)
                                 (err err-insufficient-funds))
                         true)
-                    ;; Update listing status
                     (map-set data-listings
                         { listing-id: listing-id }
                         {
@@ -168,7 +175,6 @@
                             is-active: false
                         }
                     )
-                    ;; Update seller stats
                     (let ((seller-stats (unwrap! (map-get? user-sales { user: (get seller listing) })
                                                (err err-not-seller))))
                         (map-set user-sales
@@ -182,7 +188,21 @@
                                     u0)
                             }
                         ))
-                    ;; Update platform stats
+
+                    ;; Track buyer history
+                    (let ((buyer-stats (default-to
+                            { total-purchases: u0, total-data-bought: u0, total-spent: u0 }
+                            (map-get? user-purchases { user: tx-sender }))))
+                        (map-set user-purchases
+                            { user: tx-sender }
+                            {
+                                total-purchases: (+ (get total-purchases buyer-stats) u1),
+                                total-data-bought: (+ (get total-data-bought buyer-stats)
+                                                    (get data-amount listing)),
+                                total-spent: (+ (get total-spent buyer-stats) (get price listing))
+                            }
+                        ))
+
                     (var-set total-volume-stx (+ (var-get total-volume-stx) (get price listing)))
                     (var-set total-trades (+ (var-get total-trades) u1))
                     (ok true))))))
@@ -206,6 +226,14 @@
 
 (define-read-only (get-user-sales (user principal))
     (map-get? user-sales { user: user }))
+
+(define-read-only (get-user-purchases (user principal))
+    (map-get? user-purchases { user: user }))
+
+(define-read-only (get-buyer-stats (user principal))
+    (default-to
+        { total-purchases: u0, total-data-bought: u0, total-spent: u0 }
+        (map-get? user-purchases { user: user })))
 
 (define-read-only (get-listing-count)
     (var-get listing-counter))

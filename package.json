@@ -10,6 +10,9 @@
     "test:billing": "vitest run tests/billing_test.ts",
     "test:tracking": "vitest run tests/data-tracking_test.ts",
     "test:marketplace": "vitest run tests/marketplace_test.ts",
+    "test:analytics": "vitest run tests/revenue_tracking_test.ts tests/network_stats_test.ts tests/buyer_stats_test.ts",
+    "test:stats": "vitest run tests/marketplace_stats_test.ts tests/subscription_analytics_test.ts",
+    "test:history": "vitest run tests/payment_history_test.ts tests/grace_period_test.ts",
     "lint": "echo 'No linter configured'",
     "check": "clarinet check"
   },
