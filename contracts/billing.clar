@@ -18,6 +18,8 @@
 
 ;; State
 (define-data-var is-paused bool false)
+(define-data-var total-revenue uint u0)
+(define-data-var total-subscribers uint u0)
 
 ;; Data Structures
 (define-map user-subscriptions
@@ -55,8 +57,14 @@
     }
 )
 
+;; Track per-user payment count
+(define-map user-payment-count
+    { user: principal }
+    { count: uint }
+)
+
 (define-data-var payment-counter uint u0)
-(define-data-var grace-period-blocks uint u144)  ;; Default 24 hours worth of blocks
+(define-data-var grace-period-blocks uint u144)
 
 ;; Helper Functions
 (define-private (process-subscription-payment (price uint) (sender principal))
@@ -100,7 +108,6 @@
                 discount-rate: discount-rate
             }
         )
-
         (map-set payment-history
             { payment-id: payment-id }
             {
@@ -111,7 +118,14 @@
                 status: true,
                 discount-applied: discount-rate
             }
-        )))
+        )
+        ;; Update per-user payment count
+        (let ((current-count (default-to { count: u0 }
+                (map-get? user-payment-count { user: user }))))
+            (map-set user-payment-count
+                { user: user }
+                { count: (+ (get count current-count) u1) }
+            ))))
 
 ;; Admin Functions
 (define-public (set-paused (paused bool))
@@ -166,6 +180,8 @@
                         payment-id
                         discount-rate)
                     (var-set payment-counter payment-id)
+                    (var-set total-revenue (+ (var-get total-revenue) (get price plan-details)))
+                    (var-set total-subscribers (+ (var-get total-subscribers) u1))
                     (unwrap! (contract-call? tracking-contract subscribe-to-plan plan-id true)
                             (err err-invalid-plan))
                     (ok true))))))
@@ -197,6 +213,7 @@
                             payment-id
                             (get discount-rate subscription))
                         (var-set payment-counter payment-id)
+                        (var-set total-revenue (+ (var-get total-revenue) (get price plan-details)))
                         (ok true)))))))
 
 ;; Read-only Functions
@@ -281,3 +298,20 @@
 
 (define-read-only (get-total-payments)
     (var-get payment-counter))
+
+(define-read-only (get-total-revenue)
+    (var-get total-revenue))
+
+(define-read-only (get-total-subscribers)
+    (var-get total-subscribers))
+
+(define-read-only (get-user-payment-count (user principal))
+    (default-to u0
+        (get count (map-get? user-payment-count { user: user }))))
+
+(define-read-only (get-platform-summary)
+    {
+        total-revenue: (var-get total-revenue),
+        total-subscribers: (var-get total-subscribers),
+        total-payments: (var-get payment-counter)
+    })
