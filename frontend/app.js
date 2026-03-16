@@ -585,3 +585,8 @@ async function loadStakingParams() {
     document.getElementById('staking-params').textContent = JSON.stringify(result);
   }
 }
+
+async function loadNodeRegistry() {
+  const r = await callReadOnly('data-tracking', 'get-node-registry-params', []);
+  if (r) document.getElementById('node-registry').textContent = JSON.stringify(r);
+}
