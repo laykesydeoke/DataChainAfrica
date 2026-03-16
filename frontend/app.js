@@ -14,7 +14,33 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     checkExistingSession();
+    checkPausedState();
 });
+
+function checkPausedState() {
+    Promise.all([
+        callReadOnly('billing', 'get-paused', []),
+        callReadOnly('marketplace', 'get-paused', [])
+    ]).then(function (results) {
+        var billingPaused = parseClarityBool(results[0] && results[0].result);
+        var marketPaused = parseClarityBool(results[1] && results[1].result);
+
+        var banner = document.getElementById('pauseBanner');
+        if (!banner) return;
+
+        if (billingPaused || marketPaused) {
+            var msg = [];
+            if (billingPaused) msg.push('Billing');
+            if (marketPaused) msg.push('Marketplace');
+            banner.textContent = msg.join(' & ') + ' temporarily paused for maintenance.';
+            banner.style.display = 'block';
+        } else {
+            banner.style.display = 'none';
+        }
+    }).catch(function () {
+        // Silently fail if API unreachable
+    });
+}
 
 function checkExistingSession() {
     try {
@@ -92,6 +118,7 @@ function onConnected(address) {
     btn.classList.add('connected');
     loadDashboard(address);
     loadMarketplace();
+    loadPlatformStats();
 }
 
 function loadDashboard(address) {
@@ -123,9 +150,35 @@ function updateDashboard(usage) {
 }
 
 function setDashboardPlaceholder() {
-    document.getElementById('dataUsed').textContent = '0';
-    document.getElementById('dataBalance').textContent = '0';
-    document.getElementById('planType').textContent = 'None';
+    var usedEl = document.getElementById('dataUsed');
+    var balEl = document.getElementById('dataBalance');
+    var planEl = document.getElementById('planType');
+    if (usedEl) usedEl.textContent = '0';
+    if (balEl) balEl.textContent = '0';
+    if (planEl) planEl.textContent = 'None';
+}
+
+function loadPlatformStats() {
+    callReadOnly('marketplace', 'get-platform-stats', [])
+        .then(function (data) {
+            if (!data || !data.okay || !data.result) return;
+            var stats = parseClarityValue(data.result);
+            var volEl = document.getElementById('statVolume');
+            var tradeEl = document.getElementById('statTrades');
+            var listEl = document.getElementById('statListings');
+            if (volEl && stats['total-volume']) {
+                volEl.textContent = (stats['total-volume'] / 1000000).toFixed(0) + ' STX';
+            }
+            if (tradeEl && stats['total-trades']) {
+                tradeEl.textContent = stats['total-trades'];
+            }
+            if (listEl && stats['total-listings']) {
+                listEl.textContent = stats['total-listings'];
+            }
+        })
+        .catch(function () {
+            // Silently fail
+        });
 }
 
 function subscribeToPlan(planId) {
@@ -153,7 +206,7 @@ function subscribeToPlan(planId) {
             icon: window.location.origin + '/favicon.svg'
         },
         onFinish: function (data) {
-            alert('Subscription submitted! TX: ' + data.txId);
+            showToast('Subscription submitted! TX: ' + data.txId.slice(0, 10) + '...');
         },
         onCancel: function () {
             console.log('Transaction cancelled');
@@ -184,6 +237,7 @@ function loadMarketplace() {
 
 function loadListings(count) {
     var container = document.getElementById('listings');
+    if (!container) return;
     while (container.firstChild) {
         container.removeChild(container.firstChild);
     }
@@ -234,7 +288,42 @@ function purchaseListing(listingId) {
         alert('Please connect your wallet first');
         return;
     }
-    console.log('Purchase listing:', listingId);
+
+    var txOptions = {
+        contractAddress: CONTRACT_ADDRESS,
+        contractName: 'marketplace',
+        functionName: 'purchase-listing',
+        functionArgs: [
+            uintCV(listingId),
+            contractPrincipalCV(CONTRACT_ADDRESS, 'data-tracking')
+        ],
+        appDetails: {
+            name: 'DataChain Africa',
+            icon: window.location.origin + '/favicon.svg'
+        },
+        onFinish: function (data) {
+            showToast('Purchase submitted! TX: ' + data.txId.slice(0, 10) + '...');
+        },
+        onCancel: function () {
+            console.log('Purchase cancelled');
+        }
+    };
+
+    if (window.openContractCall) {
+        window.openContractCall(txOptions);
+    } else if (window.StacksConnect && window.StacksConnect.openContractCall) {
+        window.StacksConnect.openContractCall(txOptions);
+    }
+}
+
+function showToast(message) {
+    var toast = document.getElementById('toast');
+    if (!toast) return;
+    toast.textContent = message;
+    toast.classList.add('visible');
+    setTimeout(function () {
+        toast.classList.remove('visible');
+    }, 4000);
 }
 
 function callReadOnly(contract, fnName, args) {
@@ -273,6 +362,12 @@ function parseClarityUint(hex) {
         return parseInt(hex.slice(4), 16);
     }
     return 0;
+}
+
+function parseClarityBool(hex) {
+    if (hex === '0x03') return true;
+    if (hex === '0x04') return false;
+    return false;
 }
 
 function parseClarityValue(val) {

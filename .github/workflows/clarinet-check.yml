@@ -1,0 +1,26 @@
+name: Clarinet Check
+
+on:
+  push:
+    branches: [main, "feat/**", "fix/**"]
+    paths:
+      - "contracts/**"
+      - "Clarinet.toml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "contracts/**"
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Clarinet
+        run: |
+          curl -L https://github.com/hirosystems/clarinet/releases/download/v2.9.0/clarinet-linux-x64-glibc.tar.gz | tar xz
+          sudo mv clarinet /usr/local/bin/
+
+      - name: Run clarinet check
+        run: clarinet check

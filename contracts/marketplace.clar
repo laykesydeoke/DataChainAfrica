@@ -11,6 +11,15 @@
 (define-constant err-listing-expired (err u303))
 (define-constant err-not-seller (err u304))
 (define-constant err-insufficient-funds (err u305))
+(define-constant err-contract-paused (err u306))
+(define-constant err-invalid-fee (err u307))
+(define-constant err-self-purchase (err u308))
+
+;; State
+(define-data-var is-paused bool false)
+(define-data-var platform-fee-pct uint u2)      ;; 2% platform fee
+(define-data-var total-volume-stx uint u0)       ;; total platform volume
+(define-data-var total-trades uint u0)           ;; total completed trades
 
 ;; Data Structures
 (define-map data-listings
@@ -41,42 +50,59 @@
         success (ok true)
         error (err err-insufficient-funds)))
 
+(define-private (calculate-fee (amount uint))
+    (/ (* amount (var-get platform-fee-pct)) u100))
+
+;; Admin Functions
+(define-public (set-paused (paused bool))
+    (begin
+        (asserts! (is-eq tx-sender contract-owner) (err err-owner-only))
+        (ok (var-set is-paused paused))))
+
+(define-public (set-platform-fee (fee-pct uint))
+    (begin
+        (asserts! (is-eq tx-sender contract-owner) (err err-owner-only))
+        (asserts! (<= fee-pct u10) (err err-invalid-fee))  ;; Max 10%
+        (ok (var-set platform-fee-pct fee-pct))))
+
 ;; Public Functions
-(define-public (create-listing 
-    (data-amount uint) 
-    (price uint) 
+(define-public (create-listing
+    (data-amount uint)
+    (price uint)
     (blocks-active uint)
     (tracking-contract <data-tracking-trait>))
-    (let
-        ((listing-id (+ (var-get listing-counter) u1))
-         (user-data (unwrap! (contract-call? tracking-contract get-usage tx-sender)
-                            (err err-insufficient-data))))
-        (asserts! (>= (get data-balance user-data) data-amount)
-                 (err err-insufficient-data))
-        (begin
-            (var-set listing-counter listing-id)
-            (map-set data-listings
-                { listing-id: listing-id }
-                {
-                    seller: tx-sender,
-                    data-amount: data-amount,
-                    price: price,
-                    expiry: (+ stacks-block-height blocks-active),
-                    is-active: true
-                }
-            )
-            (let ((current-sales (default-to
-                    { total-sales: u0, total-data-sold: u0, active-listings: u0 }
-                    (map-get? user-sales { user: tx-sender }))))
-                (map-set user-sales
-                    { user: tx-sender }
+    (begin
+        (asserts! (not (var-get is-paused)) (err err-contract-paused))
+        (let
+            ((listing-id (+ (var-get listing-counter) u1))
+             (user-data (unwrap! (contract-call? tracking-contract get-usage tx-sender)
+                                (err err-insufficient-data))))
+            (asserts! (>= (get data-balance user-data) data-amount)
+                     (err err-insufficient-data))
+            (begin
+                (var-set listing-counter listing-id)
+                (map-set data-listings
+                    { listing-id: listing-id }
                     {
-                        total-sales: (get total-sales current-sales),
-                        total-data-sold: (get total-data-sold current-sales),
-                        active-listings: (+ (get active-listings current-sales) u1)
+                        seller: tx-sender,
+                        data-amount: data-amount,
+                        price: price,
+                        expiry: (+ stacks-block-height blocks-active),
+                        is-active: true
                     }
-                ))
-            (ok listing-id))))
+                )
+                (let ((current-sales (default-to
+                        { total-sales: u0, total-data-sold: u0, active-listings: u0 }
+                        (map-get? user-sales { user: tx-sender }))))
+                    (map-set user-sales
+                        { user: tx-sender }
+                        {
+                            total-sales: (get total-sales current-sales),
+                            total-data-sold: (get total-data-sold current-sales),
+                            active-listings: (+ (get active-listings current-sales) u1)
+                        }
+                    ))
+                (ok listing-id)))))
 
 (define-public (cancel-listing (listing-id uint))
     (let ((listing (unwrap! (map-get? data-listings { listing-id: listing-id })
@@ -108,50 +134,73 @@
                 ))
             (ok true))))
 
-(define-public (purchase-listing 
-    (listing-id uint) 
+(define-public (purchase-listing
+    (listing-id uint)
     (tracking-contract <data-tracking-trait>))
-    (let
-        ((listing (unwrap! (map-get? data-listings { listing-id: listing-id })
-                          (err err-invalid-listing))))
-        (begin
-            (asserts! (get is-active listing) (err err-listing-expired))
-            (asserts! (<= stacks-block-height (get expiry listing)) (err err-listing-expired))
-            
-            ;; Process payment with proper error handling
-            (unwrap! (process-payment (get price listing) tx-sender (get seller listing))
-                    (err err-insufficient-funds))
-            
-            ;; Update listing status
-            (map-set data-listings
-                { listing-id: listing-id }
-                {
-                    seller: (get seller listing),
-                    data-amount: (get data-amount listing),
-                    price: (get price listing),
-                    expiry: (get expiry listing),
-                    is-active: false
-                }
-            )
-            
-            ;; Update seller stats
-            (let ((seller-stats (unwrap! (map-get? user-sales { user: (get seller listing) })
-                                       (err err-not-seller))))
-                (map-set user-sales
-                    { user: (get seller listing) }
-                    {
-                        total-sales: (+ (get total-sales seller-stats) u1),
-                        total-data-sold: (+ (get total-data-sold seller-stats) 
-                                          (get data-amount listing)),
-                        active-listings: (if (> (get active-listings seller-stats) u0)
-                            (- (get active-listings seller-stats) u1)
-                            u0)
-                    }
-                ))
+    (begin
+        (asserts! (not (var-get is-paused)) (err err-contract-paused))
+        (let
+            ((listing (unwrap! (map-get? data-listings { listing-id: listing-id })
+                              (err err-invalid-listing))))
+            (begin
+                (asserts! (get is-active listing) (err err-listing-expired))
+                (asserts! (<= stacks-block-height (get expiry listing)) (err err-listing-expired))
+                (asserts! (not (is-eq tx-sender (get seller listing))) (err err-self-purchase))
 
-            (ok true))))
+                (let ((fee (calculate-fee (get price listing)))
+                      (seller-amount (- (get price listing) (calculate-fee (get price listing)))))
+                    ;; Pay seller (minus fee)
+                    (unwrap! (process-payment seller-amount tx-sender (get seller listing))
+                            (err err-insufficient-funds))
+                    ;; Pay platform fee to contract owner
+                    (if (> fee u0)
+                        (unwrap! (process-payment fee tx-sender contract-owner)
+                                (err err-insufficient-funds))
+                        true)
+                    ;; Update listing status
+                    (map-set data-listings
+                        { listing-id: listing-id }
+                        {
+                            seller: (get seller listing),
+                            data-amount: (get data-amount listing),
+                            price: (get price listing),
+                            expiry: (get expiry listing),
+                            is-active: false
+                        }
+                    )
+                    ;; Update seller stats
+                    (let ((seller-stats (unwrap! (map-get? user-sales { user: (get seller listing) })
+                                               (err err-not-seller))))
+                        (map-set user-sales
+                            { user: (get seller listing) }
+                            {
+                                total-sales: (+ (get total-sales seller-stats) u1),
+                                total-data-sold: (+ (get total-data-sold seller-stats)
+                                                  (get data-amount listing)),
+                                active-listings: (if (> (get active-listings seller-stats) u0)
+                                    (- (get active-listings seller-stats) u1)
+                                    u0)
+                            }
+                        ))
+                    ;; Update platform stats
+                    (var-set total-volume-stx (+ (var-get total-volume-stx) (get price listing)))
+                    (var-set total-trades (+ (var-get total-trades) u1))
+                    (ok true))))))
 
 ;; Read-only Functions
+(define-read-only (get-paused)
+    (var-get is-paused))
+
+(define-read-only (get-platform-fee)
+    (var-get platform-fee-pct))
+
+(define-read-only (get-platform-stats)
+    {
+        total-volume: (var-get total-volume-stx),
+        total-trades: (var-get total-trades),
+        total-listings: (var-get listing-counter)
+    })
+
 (define-read-only (get-listing (listing-id uint))
     (map-get? data-listings { listing-id: listing-id }))
 
