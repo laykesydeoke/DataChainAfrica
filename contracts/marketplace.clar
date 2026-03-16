@@ -296,3 +296,18 @@
         (default-to
             { total-sales: u0, total-data-sold: u0, active-listings: u0 }
             (map-get? user-sales { user: seller }))))
+
+(define-read-only (get-total-data-sold (seller principal))
+    (get total-data-sold
+        (default-to
+            { total-sales: u0, total-data-sold: u0, active-listings: u0 }
+            (map-get? user-sales { user: seller }))))
+
+(define-read-only (get-marketplace-summary)
+    (let ((stats (get-platform-stats)))
+        {
+            total-volume: (get total-volume stats),
+            total-trades: (get total-trades stats),
+            total-listings: (get total-listings stats),
+            active-listings: (var-get listing-counter)
+        }))
