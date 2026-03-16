@@ -321,3 +321,8 @@
         total-events: (var-get event-counter),
         total-plans: (var-get plan-counter)
     })
+
+(define-read-only (has-active-subscription (user principal))
+    (match (map-get? user-data-usage { user: user })
+        data (< stacks-block-height (get plan-expiry data))
+        false))

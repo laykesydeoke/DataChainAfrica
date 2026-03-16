@@ -335,3 +335,10 @@
         total-subscribers: (var-get total-subscribers),
         total-payments: (var-get payment-counter)
     })
+
+(define-read-only (get-subscription-age (user principal))
+    (match (map-get? user-subscriptions { user: user })
+        sub (if (> stacks-block-height (get subscription-start sub))
+                (- stacks-block-height (get subscription-start sub))
+                u0)
+        u0))
