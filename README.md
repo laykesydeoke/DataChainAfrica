@@ -131,6 +131,9 @@ Contract owners have access to the following admin functions:
 - [x] Subscription cancellation
 - [x] Listing price updates
 - [x] Auto-renew toggle
+- [x] Listing duration extension
+- [x] Subscription age tracking
+- [x] Active subscription verification
 - [ ] Mobile carrier integration
 - [ ] Mobile app
 - [ ] Beta launch
