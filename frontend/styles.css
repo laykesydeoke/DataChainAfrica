@@ -640,6 +640,36 @@ html {
     .stats-grid { gap: 2rem; flex-wrap: wrap; }
 }
 
+/* Telemetry dashboard */
+#telemetry {
+    background: #0c1a14;
+    border: 1px solid #1e4a2e;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+#telemetry h2 {
+    color: #00e680;
+    margin-bottom: 1rem;
+    font-size: 1.1rem;
+}
+
+.telemetry-live-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    background: #00e680;
+    border-radius: 50%;
+    margin-right: 0.4rem;
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+}
+
 /* Governance dashboard */
 #governance {
     background: #0f1922;

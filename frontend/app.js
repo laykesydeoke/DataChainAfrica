@@ -2,6 +2,24 @@ var API_URL = 'https://api.testnet.hiro.so';
 var CONTRACT_ADDRESS = 'ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM';
 var userAddress = null;
 
+function loadTelemetryDashboard() {
+    Promise.all([
+        callReadOnly('data-tracking', 'get-telemetry-snapshot', []),
+        callReadOnly('billing', 'get-billing-telemetry', [])
+    ]).then(function (results) {
+        var snap = parseClarityValue(results[0] && results[0].result);
+        var bil = parseClarityValue(results[1] && results[1].result);
+        var telDataEl = document.getElementById('telTotalData');
+        var telUsersEl = document.getElementById('telUniqueUsers');
+        var telEventsEl = document.getElementById('telEventCount');
+        var telRevenueEl = document.getElementById('telRevenue');
+        if (telDataEl) telDataEl.textContent = parseClarityUint(snap['total-data-recorded']) || '--';
+        if (telUsersEl) telUsersEl.textContent = parseClarityUint(snap['total-unique-users']) || '--';
+        if (telEventsEl) telEventsEl.textContent = parseClarityUint(snap['event-count']) || '--';
+        if (telRevenueEl) telRevenueEl.textContent = parseClarityUint(bil['total-revenue-stx']) || '--';
+    }).catch(function () {});
+}
+
 function loadGovernanceDashboard(address) {
     if (!address) return;
     Promise.all([

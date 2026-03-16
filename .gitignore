@@ -37,3 +37,7 @@ consent-records/
 compliance-reports/
 *.audit.json
 operator-keys/
+telemetry-exports/
+metrics-snapshots/
+*.telemetry.json
+telemetry-cache/
