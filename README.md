@@ -67,6 +67,13 @@ npm run test:stats
 npm run test:history
 ```
 
+Run billing tests:
+```bash
+npm run test:billing-enhanced
+npm run test:billing-flow
+npm run test:billing-grace
+```
+
 Start frontend:
 ```bash
 cd frontend && npx serve .
