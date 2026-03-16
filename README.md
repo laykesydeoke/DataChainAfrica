@@ -243,3 +243,13 @@ Protect data with reserve fund:
 ```bash
 npm run test:insurance
 ```
+
+## Subscription Tiers
+
+Loyalty rewards for subscribers:
+- Three tier levels
+- Discount rates per tier
+
+```bash
+npm run test:sub-tiers
+```
