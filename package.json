@@ -19,6 +19,10 @@
     "test:marketplace-v2": "vitest run tests/extend_listing_test.ts tests/marketplace_volume_test.ts tests/concurrent_listings_test.ts tests/listing_query_test.ts",
     "test:edge": "vitest run tests/marketplace_edge_test.ts tests/billing_edge_test.ts tests/data_tracking_edge_test.ts",
     "test:lifecycle": "vitest run tests/full_lifecycle_test.ts tests/subscription_age_test.ts",
+    "test:carriers": "vitest run tests/carrier_per_stats_test.ts tests/carrier_authorization_test.ts tests/carrier_stats_test.ts",
+    "test:plans": "vitest run tests/plan_pricing_test.ts tests/multi_plan_test.ts tests/data_rollover_test.ts",
+    "test:balances": "vitest run tests/usage_balance_test.ts tests/subscription_flow_test.ts tests/subscription_plan_test.ts",
+    "test:sellers": "vitest run tests/seller_stats_test.ts tests/network_summary_test.ts",
     "lint": "echo 'No linter configured'",
     "check": "clarinet check"
   },
