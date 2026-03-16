@@ -273,3 +273,13 @@ On-chain fund management:
 ```bash
 npm run test:treasury
 ```
+
+## Data Licensing
+
+On-chain data licensing system:
+- Create licenses with royalties
+- Revoke when needed
+
+```bash
+npm run test:licensing
+```
