@@ -9,33 +9,38 @@
 (define-constant err-expired-plan (err u103))
 (define-constant err-plan-exists (err u104))
 (define-constant err-invalid-plan (err u105))
+(define-constant err-contract-paused (err u106))
+(define-constant err-plan-inactive (err u107))
 
 ;; Data Plan Types
 (define-constant plan-daily u1)
 (define-constant plan-weekly u2)
 (define-constant plan-monthly u3)
 
+;; State
+(define-data-var is-paused bool false)
+
 ;; Data Structures
 (define-map user-data-usage
     { user: principal }
     {
-        total-data-used: uint,      ;; in megabytes
-        last-updated: uint,         ;; blockchain height
-        data-balance: uint,         ;; remaining data in megabytes
-        plan-expiry: uint,          ;; expiry block height
-        plan-type: uint,            ;; type of plan (daily/weekly/monthly)
-        auto-renew: bool,           ;; auto renewal setting
-        rollover-data: uint         ;; unused data from previous period
+        total-data-used: uint,
+        last-updated: uint,
+        data-balance: uint,
+        plan-expiry: uint,
+        plan-type: uint,
+        auto-renew: bool,
+        rollover-data: uint
     }
 )
 
 (define-map data-plans
     { plan-id: uint }
     {
-        data-amount: uint,          ;; in megabytes
-        duration-blocks: uint,      ;; plan duration in blocks
-        price: uint,                ;; plan price in microSTX
-        is-active: bool             ;; whether plan is currently offered
+        data-amount: uint,
+        duration-blocks: uint,
+        price: uint,
+        is-active: bool
     }
 )
 
@@ -46,6 +51,7 @@
 
 ;; Events
 (define-data-var event-counter uint u0)
+(define-data-var plan-counter uint u0)
 
 (define-map usage-events
     { event-id: uint }
@@ -58,12 +64,19 @@
     }
 )
 
-;; Public Functions
+;; Admin Functions
+
+(define-public (set-paused (paused bool))
+    (begin
+        (asserts! (is-eq tx-sender contract-owner) (err err-owner-only))
+        (ok (var-set is-paused paused))))
 
 ;; Initialize or update a data plan type
 (define-public (set-data-plan (plan-id uint) (data-amount uint) (duration-blocks uint) (price uint))
     (begin
+        (asserts! (not (var-get is-paused)) (err err-contract-paused))
         (asserts! (is-eq tx-sender contract-owner) (err err-owner-only))
+        (var-set plan-counter (+ (var-get plan-counter) u1))
         (ok (map-set data-plans
             { plan-id: plan-id }
             {
@@ -72,79 +85,89 @@
                 price: price,
                 is-active: true
             }
-        ))
-    )
-)
+        ))))
+
+;; Deactivate a plan so no new subscriptions can use it
+(define-public (deactivate-plan (plan-id uint))
+    (begin
+        (asserts! (is-eq tx-sender contract-owner) (err err-owner-only))
+        (let ((plan (unwrap! (map-get? data-plans { plan-id: plan-id }) (err err-invalid-plan))))
+            (ok (map-set data-plans
+                { plan-id: plan-id }
+                {
+                    data-amount: (get data-amount plan),
+                    duration-blocks: (get duration-blocks plan),
+                    price: (get price plan),
+                    is-active: false
+                }
+            )))))
 
 ;; Subscribe to a data plan
 (define-public (subscribe-to-plan (plan-id uint) (auto-renew bool))
-    (let
-        (
-            (user tx-sender)
-            (plan (unwrap! (map-get? data-plans { plan-id: plan-id }) (err err-invalid-plan)))
-            (current-usage (map-get? user-data-usage { user: user }))
-            (rollover-amount (if (is-some current-usage)
-                (get rollover-data (unwrap-panic current-usage))
-                u0))
-        )
-        (asserts! (get is-active plan) (err err-invalid-plan))
-        
-        (ok (map-set user-data-usage
-            { user: user }
-            {
-                total-data-used: u0,
-                last-updated: stacks-block-height,
-                data-balance: (+ (get data-amount plan) rollover-amount),
-                plan-expiry: (+ stacks-block-height (get duration-blocks plan)),
-                plan-type: plan-id,
-                auto-renew: auto-renew,
-                rollover-data: u0
-            }
-        ))
-    )
-)
+    (begin
+        (asserts! (not (var-get is-paused)) (err err-contract-paused))
+        (let
+            (
+                (user tx-sender)
+                (plan (unwrap! (map-get? data-plans { plan-id: plan-id }) (err err-invalid-plan)))
+                (current-usage (map-get? user-data-usage { user: user }))
+                (rollover-amount (if (is-some current-usage)
+                    (get rollover-data (unwrap-panic current-usage))
+                    u0))
+            )
+            (asserts! (get is-active plan) (err err-plan-inactive))
+            (ok (map-set user-data-usage
+                { user: user }
+                {
+                    total-data-used: u0,
+                    last-updated: stacks-block-height,
+                    data-balance: (+ (get data-amount plan) rollover-amount),
+                    plan-expiry: (+ stacks-block-height (get duration-blocks plan)),
+                    plan-type: plan-id,
+                    auto-renew: auto-renew,
+                    rollover-data: u0
+                }
+            )))))
 
 ;; Record data usage with event logging
 (define-public (record-usage (user principal) (usage uint))
-    (let
-        (
-            (carrier tx-sender)
-            (is-authorized (default-to { is-authorized: false } (map-get? authorized-carriers { carrier: carrier })))
-            (current-data (unwrap! (map-get? user-data-usage { user: user }) (err err-invalid-data)))
-            (event-id (+ (var-get event-counter) u1))
-        )
-        (asserts! (get is-authorized is-authorized) (err err-invalid-caller))
-        (asserts! (<= usage (get data-balance current-data)) (err err-invalid-data))
-        (asserts! (< stacks-block-height (get plan-expiry current-data)) (err err-expired-plan))
-        
-        ;; Update usage data
-        (map-set user-data-usage
-            { user: user }
-            {
-                total-data-used: (+ (get total-data-used current-data) usage),
-                last-updated: stacks-block-height,
-                data-balance: (- (get data-balance current-data) usage),
-                plan-expiry: (get plan-expiry current-data),
-                plan-type: (get plan-type current-data),
-                auto-renew: (get auto-renew current-data),
-                rollover-data: (get rollover-data current-data)
-            }
-        )
-        
-        ;; Log usage event
-        (var-set event-counter event-id)
-        (ok (map-set usage-events
-            { event-id: event-id }
-            {
-                user: user,
-                usage-amount: usage,
-                timestamp: stacks-block-height,
-                carrier: carrier,
-                remaining-balance: (- (get data-balance current-data) usage)
-            }
-        ))
-    )
-)
+    (begin
+        (asserts! (not (var-get is-paused)) (err err-contract-paused))
+        (let
+            (
+                (carrier tx-sender)
+                (is-authorized (default-to { is-authorized: false } (map-get? authorized-carriers { carrier: carrier })))
+                (current-data (unwrap! (map-get? user-data-usage { user: user }) (err err-invalid-data)))
+                (event-id (+ (var-get event-counter) u1))
+            )
+            (asserts! (get is-authorized is-authorized) (err err-invalid-caller))
+            (asserts! (<= usage (get data-balance current-data)) (err err-invalid-data))
+            (asserts! (< stacks-block-height (get plan-expiry current-data)) (err err-expired-plan))
+
+            (map-set user-data-usage
+                { user: user }
+                {
+                    total-data-used: (+ (get total-data-used current-data) usage),
+                    last-updated: stacks-block-height,
+                    data-balance: (- (get data-balance current-data) usage),
+                    plan-expiry: (get plan-expiry current-data),
+                    plan-type: (get plan-type current-data),
+                    auto-renew: (get auto-renew current-data),
+                    rollover-data: (get rollover-data current-data)
+                }
+            )
+
+            (var-set event-counter event-id)
+            (ok (map-set usage-events
+                { event-id: event-id }
+                {
+                    user: user,
+                    usage-amount: usage,
+                    timestamp: stacks-block-height,
+                    carrier: carrier,
+                    remaining-balance: (- (get data-balance current-data) usage)
+                }
+            )))))
 
 ;; Handle plan expiry and auto-renewal
 (define-public (process-plan-expiry (user principal))
@@ -154,7 +177,7 @@
             (current-plan (unwrap! (map-get? data-plans { plan-id: (get plan-type current-data) }) (err err-invalid-plan)))
         )
         (asserts! (>= stacks-block-height (get plan-expiry current-data)) (err err-invalid-data))
-        
+
         (if (get auto-renew current-data)
             (ok (map-set user-data-usage
                 { user: user }
@@ -179,10 +202,7 @@
                     auto-renew: false,
                     rollover-data: u0
                 }
-            ))
-        )
-    )
-)
+            )))))
 
 ;; Authorize a carrier to record usage
 (define-public (authorize-carrier (carrier principal))
@@ -191,9 +211,7 @@
         (ok (map-set authorized-carriers
             { carrier: carrier }
             { is-authorized: true }
-        ))
-    )
-)
+        ))))
 
 ;; Revoke carrier authorization
 (define-public (revoke-carrier (carrier principal))
@@ -202,9 +220,7 @@
         (ok (map-set authorized-carriers
             { carrier: carrier }
             { is-authorized: false }
-        ))
-    )
-)
+        ))))
 
 ;; Update an existing data plan
 (define-public (update-plan (plan-id uint) (data-amount uint) (duration-blocks uint) (price uint))
@@ -219,17 +235,13 @@
                 price: price,
                 is-active: true
             }
-        ))
-    )
-)
+        ))))
 
 ;; Get usage data (trait-compatible wrapper)
 (define-public (get-usage (user principal))
     (match (map-get? user-data-usage { user: user })
         data (ok data)
-        (err err-invalid-data)
-    )
-)
+        (err err-invalid-data)))
 
 ;; Get usage history by event id for a user
 (define-public (get-usage-history (user principal) (event-id uint))
@@ -242,42 +254,34 @@
                 remaining-balance: (get remaining-balance event)
             })
             (err err-invalid-data))
-        (err err-invalid-data)
-    )
-)
+        (err err-invalid-data)))
 
 ;; Check if user's plan is still valid
 (define-public (check-plan-validity (user principal))
     (match (map-get? user-data-usage { user: user })
         data (ok (< stacks-block-height (get plan-expiry data)))
-        (err err-invalid-data)
-    )
-)
+        (err err-invalid-data)))
 
 ;; Read-only functions
 
-;; Get user's current data usage and plan details
+(define-read-only (get-paused)
+    (var-get is-paused))
+
 (define-read-only (get-user-data (user principal))
-    (map-get? user-data-usage { user: user })
-)
+    (map-get? user-data-usage { user: user }))
 
-;; Get plan details
 (define-read-only (get-plan-details (plan-id uint))
-    (map-get? data-plans { plan-id: plan-id })
-)
+    (map-get? data-plans { plan-id: plan-id }))
 
-;; Get usage event details
 (define-read-only (get-usage-event (event-id uint))
-    (map-get? usage-events { event-id: event-id })
-)
+    (map-get? usage-events { event-id: event-id }))
 
-;; Get latest event ID
 (define-read-only (get-latest-event-id)
-    (var-get event-counter)
-)
+    (var-get event-counter))
 
-;; Check if carrier is authorized
+(define-read-only (get-total-plans)
+    (var-get plan-counter))
+
 (define-read-only (is-carrier-authorized (carrier principal))
     (default-to false
-        (get is-authorized (map-get? authorized-carriers { carrier: carrier })))
-)
+        (get is-authorized (map-get? authorized-carriers { carrier: carrier }))))

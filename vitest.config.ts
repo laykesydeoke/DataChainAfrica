@@ -8,5 +8,7 @@ export default defineConfig({
       forks: { singleFork: true },
     },
     setupFiles: ["./tests/setup.ts"],
+    testTimeout: 30000,
+    reporters: ["verbose"],
   },
 });

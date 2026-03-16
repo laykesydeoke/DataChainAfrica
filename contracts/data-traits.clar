@@ -1,3 +1,6 @@
+;; data-traits.clar
+;; Shared trait definitions for DataChainAfrica contracts
+
 (define-trait data-tracking-trait
     (
         ;; Get plan details (read-only)
@@ -26,8 +29,18 @@
 
 (define-trait marketplace-trait
     (
+        ;; Create a new data listing
         (create-listing (uint uint uint) (response uint uint))
+        ;; Cancel an existing listing
         (cancel-listing (uint) (response bool uint))
+        ;; Purchase a listing
         (purchase-listing (uint) (response bool uint))
+    )
+)
+
+(define-trait pausable-trait
+    (
+        ;; Get the pause state
+        (get-paused () bool)
     )
 )

@@ -4,6 +4,7 @@ import { simnet } from "./setup";
 
 const deployer = simnet.deployer;
 const wallet1 = simnet.getAccounts().get("wallet_1")!;
+const wallet2 = simnet.getAccounts().get("wallet_2")!;
 
 describe("billing contract", () => {
   it("allows owner to set promotional rate", () => {
@@ -37,7 +38,6 @@ describe("billing contract", () => {
   });
 
   it("subscribes and pays with tracking contract", () => {
-    // First set up a plan in data-tracking
     simnet.callPublicFn(
       "data-tracking",
       "set-data-plan",
@@ -83,9 +83,7 @@ describe("billing contract", () => {
       wallet1
     );
     expect(result.result).toBeSome(
-      expect.objectContaining({
-        type: expect.any(Number),
-      })
+      expect.objectContaining({ type: expect.any(Number) })
     );
   });
 
@@ -96,7 +94,6 @@ describe("billing contract", () => {
       [Cl.principal(wallet1)],
       wallet1
     );
-    // Should not underflow for non-existent user
     expect(result.result).toBeTuple({
       "is-active": Cl.bool(false),
       "days-remaining": Cl.uint(0),
@@ -139,5 +136,131 @@ describe("billing contract", () => {
       deployer
     );
     expect(result.result).toBeBool(true);
+  });
+
+  it("starts unpaused", () => {
+    const result = simnet.callReadOnlyFn("billing", "get-paused", [], deployer);
+    expect(result.result).toBeBool(false);
+  });
+
+  it("owner can pause the contract", () => {
+    const { result } = simnet.callPublicFn(
+      "billing",
+      "set-paused",
+      [Cl.bool(true)],
+      deployer
+    );
+    expect(result).toBeOk(Cl.bool(true));
+
+    const paused = simnet.callReadOnlyFn("billing", "get-paused", [], deployer);
+    expect(paused.result).toBeBool(true);
+
+    simnet.callPublicFn("billing", "set-paused", [Cl.bool(false)], deployer);
+  });
+
+  it("non-owner cannot pause", () => {
+    const { result } = simnet.callPublicFn(
+      "billing",
+      "set-paused",
+      [Cl.bool(true)],
+      wallet1
+    );
+    expect(result).toBeErr(Cl.uint(200));
+  });
+
+  it("subscribe-and-pay fails when paused", () => {
+    simnet.callPublicFn(
+      "data-tracking",
+      "set-data-plan",
+      [Cl.uint(1), Cl.uint(500), Cl.uint(144), Cl.uint(50000000)],
+      deployer
+    );
+    simnet.callPublicFn("billing", "set-paused", [Cl.bool(true)], deployer);
+
+    const { result } = simnet.callPublicFn(
+      "billing",
+      "subscribe-and-pay",
+      [
+        Cl.uint(1),
+        Cl.contractPrincipal(deployer, "data-tracking"),
+        Cl.uint(0),
+      ],
+      wallet1
+    );
+    expect(result).toBeErr(Cl.uint(207));
+
+    simnet.callPublicFn("billing", "set-paused", [Cl.bool(false)], deployer);
+  });
+
+  it("owner can update grace period", () => {
+    const { result } = simnet.callPublicFn(
+      "billing",
+      "update-grace-period",
+      [Cl.uint(288)],
+      deployer
+    );
+    expect(result).toBeOk(Cl.bool(true));
+
+    const gp = simnet.callReadOnlyFn("billing", "get-grace-period", [], deployer);
+    expect(gp.result).toBeUint(288);
+
+    simnet.callPublicFn("billing", "update-grace-period", [Cl.uint(144)], deployer);
+  });
+
+  it("rejects invalid grace period of zero", () => {
+    const { result } = simnet.callPublicFn(
+      "billing",
+      "update-grace-period",
+      [Cl.uint(0)],
+      deployer
+    );
+    expect(result).toBeErr(Cl.uint(208));
+  });
+
+  it("non-owner cannot update grace period", () => {
+    const { result } = simnet.callPublicFn(
+      "billing",
+      "update-grace-period",
+      [Cl.uint(200)],
+      wallet1
+    );
+    expect(result).toBeErr(Cl.uint(200));
+  });
+
+  it("get-total-payments starts at zero", () => {
+    const result = simnet.callReadOnlyFn(
+      "billing",
+      "get-total-payments",
+      [],
+      deployer
+    );
+    expect(result.result).toBeUint(0);
+  });
+
+  it("get-total-payments increments after subscribe", () => {
+    simnet.callPublicFn(
+      "data-tracking",
+      "set-data-plan",
+      [Cl.uint(2), Cl.uint(500), Cl.uint(144), Cl.uint(50000000)],
+      deployer
+    );
+    simnet.callPublicFn(
+      "billing",
+      "subscribe-and-pay",
+      [
+        Cl.uint(2),
+        Cl.contractPrincipal(deployer, "data-tracking"),
+        Cl.uint(0),
+      ],
+      wallet2
+    );
+
+    const result = simnet.callReadOnlyFn(
+      "billing",
+      "get-total-payments",
+      [],
+      deployer
+    );
+    expect(result.result).toBeUint(1);
   });
 });

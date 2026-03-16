@@ -23,6 +23,8 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+    <div id="pauseBanner" class="pause-banner" style="display:none;"></div>
+    <div id="toast" class="toast"></div>
     <nav class="nav">
         <div class="nav-brand">DataChain Africa</div>
         <ul class="nav-menu">
@@ -115,16 +117,16 @@
     <section class="stats">
         <div class="stats-grid">
             <div class="stat">
-                <span class="stat-value">4</span>
-                <span class="stat-label">Smart Contracts</span>
+                <span id="statVolume" class="stat-value">--</span>
+                <span class="stat-label">Total Volume</span>
             </div>
             <div class="stat">
-                <span class="stat-value">3</span>
-                <span class="stat-label">Plan Types</span>
+                <span id="statTrades" class="stat-value">--</span>
+                <span class="stat-label">Total Trades</span>
             </div>
             <div class="stat">
-                <span class="stat-value">P2P</span>
-                <span class="stat-label">Data Trading</span>
+                <span id="statListings" class="stat-value">--</span>
+                <span class="stat-label">Total Listings</span>
             </div>
         </div>
     </section>
