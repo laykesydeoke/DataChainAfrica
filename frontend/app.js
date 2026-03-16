@@ -590,3 +590,8 @@ async function loadNodeRegistry() {
   const r = await callReadOnly('data-tracking', 'get-node-registry-params', []);
   if (r) document.getElementById('node-registry').textContent = JSON.stringify(r);
 }
+
+async function loadBountyStats() {
+  const r = await callReadOnly("marketplace", "get-bounty-stats", []);
+  if (r) document.getElementById("bounty-stats").textContent = JSON.stringify(r);
+}
