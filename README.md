@@ -74,6 +74,28 @@ npm run test:billing-flow
 npm run test:billing-grace
 ```
 
+Run marketplace analytics tests:
+```bash
+npm run test:marketplace-analytics
+npm run test:buyer-stats
+npm run test:seller-stats
+```
+
+## Smart Contract Features
+
+### Marketplace
+
+- Create, cancel, extend, and reprice listings
+- Self-purchase protection
+- Platform fee configuration (max 10%)
+- On-chain volume and trade tracking
+- Per-seller and per-buyer analytics
+- Marketplace summary aggregate view
+
+### Analytics Endpoints
+
+See `docs/analytics-overview.md` for a complete reference of all analytics functions across all contracts.
+
 Start frontend:
 ```bash
 cd frontend && npx serve .
