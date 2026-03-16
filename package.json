@@ -26,6 +26,9 @@
     "test:billing-enhanced": "vitest run tests/grace_remaining_test.ts tests/payment_record_test.ts tests/revenue_stx_test.ts tests/billing_promo_test.ts",
     "test:billing-flow": "vitest run tests/subscription_details_test.ts tests/billing_cancel_renewal_test.ts tests/billing_paused_test.ts tests/multi_subscription_test.ts",
     "test:billing-grace": "vitest run tests/billing_grace_config_test.ts tests/billing_renewal_test.ts",
+    "test:marketplace-analytics": "vitest run tests/marketplace_summary_test.ts tests/total_data_sold_test.ts tests/platform_stats_test.ts",
+    "test:buyer-stats": "vitest run tests/buyer_purchase_count_test.ts tests/buyer_data_bought_test.ts tests/buyer_stats_test.ts",
+    "test:seller-stats": "vitest run tests/seller_stats_test.ts tests/marketplace_volume_analytics_test.ts",
     "lint": "echo 'No linter configured'",
     "check": "clarinet check"
   },
