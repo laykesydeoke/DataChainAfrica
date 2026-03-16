@@ -373,3 +373,26 @@
         is-paused: (var-get is-paused),
         grace-period-blocks: (var-get grace-period-blocks)
     })
+
+;; Validator reward tracking
+(define-map validator-rewards principal { earned: uint, claimed: uint, last-claim: uint })
+(define-data-var total-validator-rewards uint u0)
+(define-data-var reward-per-block uint u10)
+
+(define-read-only (get-validator-reward (validator principal))
+  (default-to { earned: u0, claimed: u0, last-claim: u0 } (map-get? validator-rewards validator)))
+
+(define-read-only (get-validator-params)
+  { total-rewards: (var-get total-validator-rewards), reward-per-block: (var-get reward-per-block) })
+
+(define-public (accrue-validator-reward (validator principal) (amount uint))
+  (let ((current (get-validator-reward validator)))
+    (map-set validator-rewards validator (merge current { earned: (+ (get earned current) amount) }))
+    (var-set total-validator-rewards (+ (var-get total-validator-rewards) amount))
+    (ok true)))
+
+(define-public (claim-validator-reward)
+  (let ((reward (get-validator-reward tx-sender)))
+    (asserts! (> (get earned reward) (get claimed reward)) (err u801))
+    (map-set validator-rewards tx-sender (merge reward { claimed: (get earned reward), last-claim: stacks-block-height }))
+    (ok (- (get earned reward) (get claimed reward)))))
