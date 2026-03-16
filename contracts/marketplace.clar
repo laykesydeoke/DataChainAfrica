@@ -225,6 +225,24 @@
             }
         ))))
 
+;; Seller can extend the expiry of an active listing
+(define-public (extend-listing-duration (listing-id uint) (extra-blocks uint))
+    (let ((listing (unwrap! (map-get? data-listings { listing-id: listing-id })
+                           (err err-invalid-listing))))
+        (asserts! (is-eq (get seller listing) tx-sender) (err err-not-seller))
+        (asserts! (get is-active listing) (err err-listing-expired))
+        (asserts! (> extra-blocks u0) (err err-insufficient-funds))
+        (ok (map-set data-listings
+            { listing-id: listing-id }
+            {
+                seller: (get seller listing),
+                data-amount: (get data-amount listing),
+                price: (get price listing),
+                expiry: (+ (get expiry listing) extra-blocks),
+                is-active: true
+            }
+        ))))
+
 ;; Read-only Functions
 (define-read-only (get-paused)
     (var-get is-paused))
