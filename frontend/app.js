@@ -595,3 +595,8 @@ async function loadBountyStats() {
   const r = await callReadOnly("marketplace", "get-bounty-stats", []);
   if (r) document.getElementById("bounty-stats").textContent = JSON.stringify(r);
 }
+
+async function loadValidatorParams() {
+  const r = await callReadOnly("billing", "get-validator-params", []);
+  if (r) document.getElementById("validator-data").textContent = JSON.stringify(r);
+}
