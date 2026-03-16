@@ -253,3 +253,13 @@ Loyalty rewards for subscribers:
 ```bash
 npm run test:sub-tiers
 ```
+
+## Reputation System
+
+On-chain provider reputation:
+- Weighted review scoring
+- Transparent history
+
+```bash
+npm run test:reputation
+```
