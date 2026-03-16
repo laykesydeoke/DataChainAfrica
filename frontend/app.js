@@ -271,6 +271,26 @@ function loadUserAnalytics(address) {
     }).catch(function () {});
 }
 
+function loadMarketplaceAnalytics() {
+    callReadOnly('marketplace', 'get-marketplace-summary', [])
+        .then(function (data) {
+            if (!data || !data.okay) return;
+            var summary = parseClarityValue(data.result);
+            var volEl = document.getElementById('mktVolume');
+            var tradesEl = document.getElementById('mktTrades');
+            var listingsEl = document.getElementById('mktListings');
+            if (volEl && summary['total-volume'] !== undefined) {
+                volEl.textContent = (summary['total-volume'] / 1000000).toFixed(2) + ' STX';
+            }
+            if (tradesEl && summary['total-trades'] !== undefined) {
+                tradesEl.textContent = summary['total-trades'];
+            }
+            if (listingsEl && summary['total-listings'] !== undefined) {
+                listingsEl.textContent = summary['total-listings'];
+            }
+        }).catch(function () {});
+}
+
 function loadBillingStats(address) {
     if (!address) return;
     Promise.all([
