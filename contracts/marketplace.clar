@@ -207,6 +207,24 @@
                     (var-set total-trades (+ (var-get total-trades) u1))
                     (ok true))))))
 
+;; Allow seller to update price of an active listing
+(define-public (update-listing-price (listing-id uint) (new-price uint))
+    (let ((listing (unwrap! (map-get? data-listings { listing-id: listing-id })
+                           (err err-invalid-listing))))
+        (asserts! (is-eq (get seller listing) tx-sender) (err err-not-seller))
+        (asserts! (get is-active listing) (err err-listing-expired))
+        (asserts! (> new-price u0) (err err-insufficient-funds))
+        (ok (map-set data-listings
+            { listing-id: listing-id }
+            {
+                seller: (get seller listing),
+                data-amount: (get data-amount listing),
+                price: new-price,
+                expiry: (get expiry listing),
+                is-active: true
+            }
+        ))))
+
 ;; Read-only Functions
 (define-read-only (get-paused)
     (var-get is-paused))
