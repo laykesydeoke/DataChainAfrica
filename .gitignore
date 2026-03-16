@@ -29,3 +29,5 @@ carrier-keys/
 *.carrier.key
 payment-exports/
 billing-reports/
+marketplace-exports/
+analytics-snapshots/
