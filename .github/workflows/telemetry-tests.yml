@@ -1,0 +1,27 @@
+name: Telemetry Tests
+
+on:
+  push:
+    branches: [ feat/telemetry-reporting ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test-telemetry:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - name: Install dependencies
+        run: npm ci
+      - name: Run basic telemetry tests
+        run: npm run test:telemetry
+      - name: Run reporting tests
+        run: npm run test:telemetry-reporting
+      - name: Run metrics tests
+        run: npm run test:metrics
+      - name: Run full telemetry suite
+        run: npm run test:telemetry-full
