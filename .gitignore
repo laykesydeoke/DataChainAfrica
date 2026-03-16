@@ -49,3 +49,5 @@ bounty-logs/
 bounty-cache/
 validator-logs/
 reward-cache/
+insurance-logs/
+insurance-cache/
