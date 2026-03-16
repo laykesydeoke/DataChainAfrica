@@ -906,3 +906,5 @@
   (match (map-get? plan-mgr-registry id)
     entry (ok (get owner entry))
     (err u811)))
+(define-read-only (get-plan-mgr-value (id uint))
+  (default-to u0 (get value (map-get? plan-mgr-registry id))))
