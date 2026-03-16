@@ -79,6 +79,25 @@ Follow the same steps as testnet but use `--network mainnet`.
 
 > **Warning**: Always thoroughly test on testnet before mainnet deployment.
 
+## Carrier Management Post-Deploy
+
+After deployment, manage carriers as follows:
+
+### Add a new carrier
+```
+(contract-call? .data-tracking authorize-carrier 'NEW_CARRIER_ADDRESS)
+```
+
+### Monitor carrier stats
+```
+(contract-call? .data-tracking get-carrier-stats 'CARRIER_ADDRESS)
+```
+
+### Revoke a carrier
+```
+(contract-call? .data-tracking revoke-carrier 'CARRIER_ADDRESS)
+```
+
 ## Contract Upgrade Path
 
 Clarity contracts are immutable once deployed. To upgrade:
