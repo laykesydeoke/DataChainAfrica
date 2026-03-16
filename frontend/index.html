@@ -118,6 +118,15 @@
         <div id="listings" class="listings">
             <p class="empty-state">No active listings. Connect wallet to browse or list data.</p>
         </div>
+        <div id="extendListingPanel" style="display:none; margin-top:2rem; padding:1.5rem; background:var(--white); border-radius:10px; box-shadow:var(--shadow);">
+            <h3 style="margin-bottom:1rem; font-size:1rem;">Extend Your Listing</h3>
+            <p style="font-size:0.85rem; color:var(--muted); margin-bottom:1rem;">Add more blocks to the expiry of one of your active listings.</p>
+            <div class="extend-listing-form">
+                <input type="number" id="extendListingId" placeholder="Listing ID" min="1" style="width:110px;">
+                <input type="number" id="extendBlocks" placeholder="Blocks" min="1" class="extend-listing-form input[type=number]">
+                <button class="btn-extend" onclick="extendListingFromForm()">Extend</button>
+            </div>
+        </div>
     </section>
 
     <section class="stats">
