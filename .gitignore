@@ -16,3 +16,12 @@ coverage/
 test-results/
 .nyc_output/
 reports/
+*.local
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+indexer-data/
+chainhook-events/
+*.snap
+junit.xml

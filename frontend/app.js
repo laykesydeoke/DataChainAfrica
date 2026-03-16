@@ -271,6 +271,27 @@ function loadUserAnalytics(address) {
     }).catch(function () {});
 }
 
+function extendListing(listingId, extraBlocks) {
+    if (!userAddress) return;
+
+    var txOptions = {
+        contractAddress: CONTRACT_ADDRESS,
+        contractName: 'marketplace',
+        functionName: 'extend-listing-duration',
+        functionArgs: [uintCV(listingId), uintCV(extraBlocks)],
+        appDetails: { name: 'DataChain Africa', icon: window.location.origin + '/favicon.svg' },
+        onFinish: function (data) {
+            showToast('Listing extended! TX: ' + data.txId.slice(0, 10) + '...');
+        },
+        onCancel: function () {}
+    };
+
+    if (window.openContractCall) window.openContractCall(txOptions);
+    else if (window.StacksConnect && window.StacksConnect.openContractCall) {
+        window.StacksConnect.openContractCall(txOptions);
+    }
+}
+
 function subscribeToPlan(planId) {
     if (!userAddress) {
         alert('Please connect your wallet first');
