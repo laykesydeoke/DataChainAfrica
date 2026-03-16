@@ -605,3 +605,8 @@ async function loadInsuranceParams() {
   const r = await callReadOnly("billing", "get-insurance-params", []);
   if (r) document.getElementById("insurance-data").textContent = JSON.stringify(r);
 }
+
+async function loadTierThresholds() {
+  const r = await callReadOnly("data-tracking", "get-tier-thresholds", []);
+  if (r) document.getElementById("tier-data").textContent = JSON.stringify(r);
+}
