@@ -357,3 +357,18 @@
     (match (map-get? user-data-usage { user: user })
         data (< stacks-block-height (get plan-expiry data))
         false))
+
+(define-read-only (get-plan-expiry (user principal))
+    (match (map-get? user-data-usage { user: user })
+        data (some (get plan-expiry data))
+        none))
+
+(define-read-only (get-user-plan-type (user principal))
+    (match (map-get? user-data-usage { user: user })
+        data (some (get plan-type data))
+        none))
+
+(define-read-only (get-user-auto-renew (user principal))
+    (match (map-get? user-data-usage { user: user })
+        data (some (get auto-renew data))
+        none))
