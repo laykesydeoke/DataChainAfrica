@@ -18,6 +18,9 @@ Blockchain-based mobile data tracking and billing for Nigeria. Built on the Stac
 - Subscription cancellation with grace period
 - Seller listing price updates
 - User-controlled auto-renew toggle
+- Per-carrier usage statistics and event tracking
+- Seller revenue and listing statistics
+- Complete API reference documentation
 
 ## Tech Stack
 
