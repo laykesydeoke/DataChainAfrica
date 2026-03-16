@@ -15,6 +15,7 @@
 (define-constant err-invalid-discount (err u206))
 (define-constant err-contract-paused (err u207))
 (define-constant err-invalid-amount (err u208))
+(define-constant err-already-cancelled (err u209))
 
 ;; State
 (define-data-var is-paused bool false)
@@ -149,6 +150,25 @@
                 discount-percentage: discount,
                 valid-until: (+ stacks-block-height valid-blocks),
                 min-subscription-months: min-months
+            }
+        ))))
+
+;; Cancel subscription (mark payment as due, disabling access at grace period end)
+(define-public (cancel-subscription)
+    (let ((subscription (unwrap! (map-get? user-subscriptions { user: tx-sender })
+                                 (err err-no-subscription))))
+        (asserts! (get payment-status subscription) (err err-already-cancelled))
+        (ok (map-set user-subscriptions
+            { user: tx-sender }
+            {
+                current-plan-id: (get current-plan-id subscription),
+                last-payment: (get last-payment subscription),
+                payment-due: stacks-block-height,
+                payment-status: false,
+                subscription-start: (get subscription-start subscription),
+                total-payments: (get total-payments subscription),
+                grace-period-end: (+ stacks-block-height (var-get grace-period-blocks)),
+                discount-rate: (get discount-rate subscription)
             }
         ))))
 
