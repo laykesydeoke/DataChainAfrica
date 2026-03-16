@@ -29,6 +29,12 @@ Blockchain-based mobile data tracking and billing for Nigeria. Built on the Stac
 - Carrier revocation and access control
 - Data retention audit trail
 - Operator governance dashboard
+- Real-time network telemetry snapshot
+- User-level telemetry reporting
+- Billing telemetry with revenue in STX and µSTX
+- Plan metrics and performance reporting
+- Telemetry invariants enforcement
+- Comprehensive metrics reference documentation
 
 ## Tech Stack
 
