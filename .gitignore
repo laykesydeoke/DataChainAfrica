@@ -47,3 +47,5 @@ node-registry-cache/
 node-logs/
 bounty-logs/
 bounty-cache/
+validator-logs/
+reward-cache/
