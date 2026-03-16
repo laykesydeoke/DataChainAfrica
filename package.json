@@ -5,7 +5,13 @@
   "private": true,
   "scripts": {
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "test:billing": "vitest run tests/billing_test.ts",
+    "test:tracking": "vitest run tests/data-tracking_test.ts",
+    "test:marketplace": "vitest run tests/marketplace_test.ts",
+    "lint": "echo 'No linter configured'",
+    "check": "clarinet check"
   },
   "devDependencies": {
     "@hirosystems/clarinet-sdk": "^2.9.0",
