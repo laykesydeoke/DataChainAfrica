@@ -372,3 +372,21 @@
     (match (map-get? user-data-usage { user: user })
         data (some (get auto-renew data))
         none))
+
+(define-read-only (get-telemetry-snapshot)
+    {
+        total-data-recorded: (var-get total-data-recorded),
+        total-unique-users: (var-get total-unique-users),
+        event-count: (var-get event-counter),
+        is-paused: (var-get is-paused)
+    })
+
+(define-read-only (get-user-telemetry (user principal))
+    (match (map-get? user-data-usage { user: user })
+        data (some {
+            total-data-used: (get total-data-used data),
+            data-balance: (get data-balance data),
+            plan-expiry: (get plan-expiry data),
+            last-updated: (get last-updated data)
+        })
+        none))
