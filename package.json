@@ -54,7 +54,9 @@
     "test:reputation": "vitest run tests/rep_default_test.ts tests/rep_review_test.ts tests/rep_full_test.ts",
     "test:rep-edge": "vitest run tests/rep_edge_test.ts tests/rep_invariant_test.ts tests/rep_coexist_test.ts",
     "test:treasury": "vitest run tests/treas_default_test.ts tests/treas_contribute_test.ts tests/treas_full_test.ts",
-    "test:treasury-edge": "vitest run tests/treas_edge_test.ts tests/treas_invariant_test.ts tests/treas_summary_test.ts"
+    "test:treasury-edge": "vitest run tests/treas_edge_test.ts tests/treas_invariant_test.ts tests/treas_summary_test.ts",
+    "test:licensing": "vitest run tests/lic_default_test.ts tests/lic_create_test.ts tests/lic_full_test.ts",
+    "test:lic-edge": "vitest run tests/lic_edge_test.ts tests/lic_invariant_test.ts tests/lic_revoke_test.ts"
   },
   "devDependencies": {
     "@hirosystems/clarinet-sdk": "^2.9.0",
