@@ -620,3 +620,8 @@ async function loadTreasuryParams() {
   const r = await callReadOnly("billing", "get-treasury-params", []);
   if (r) document.getElementById("treasury-data").textContent = JSON.stringify(r);
 }
+
+async function loadLicensingParams() {
+  const r = await callReadOnly("marketplace", "get-licensing-params", []);
+  if (r) document.getElementById("licensing-data").textContent = JSON.stringify(r);
+}
