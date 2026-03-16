@@ -416,3 +416,22 @@
   (begin
     (map-set node-registry tx-sender { active: false, registered-at: stacks-block-height, node-type: u0 })
     (ok true)))
+
+;; Subscription tier system
+(define-map subscriber-tiers principal { tier: uint, upgraded-at: uint, discount-bps: uint })
+(define-data-var tier-1-threshold uint u3)
+(define-data-var tier-2-threshold uint u6)
+(define-data-var tier-3-threshold uint u10)
+
+(define-read-only (get-subscriber-tier (subscriber principal))
+  (default-to { tier: u1, upgraded-at: u0, discount-bps: u0 } (map-get? subscriber-tiers subscriber)))
+
+(define-read-only (get-tier-thresholds)
+  { tier-1: (var-get tier-1-threshold), tier-2: (var-get tier-2-threshold), tier-3: (var-get tier-3-threshold) })
+
+(define-public (upgrade-tier (subscriber principal) (new-tier uint))
+  (begin
+    (asserts! (or (is-eq new-tier u2) (is-eq new-tier u3)) (err u1001))
+    (let ((discount (if (is-eq new-tier u3) u200 u100)))
+      (map-set subscriber-tiers subscriber { tier: new-tier, upgraded-at: stacks-block-height, discount-bps: discount })
+      (ok true))))
