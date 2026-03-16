@@ -397,6 +397,17 @@ footer {
     font-size: 0.82rem;
 }
 
+/* Nav active link */
+.nav-menu a.active {
+    color: var(--green);
+    font-weight: 600;
+}
+
+/* Section anchors smooth scroll */
+html {
+    scroll-behavior: smooth;
+}
+
 /* Cancel Subscription Button */
 .btn-cancel {
     background: transparent;
