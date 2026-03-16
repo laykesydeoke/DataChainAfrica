@@ -390,3 +390,29 @@
             last-updated: (get last-updated data)
         })
         none))
+
+;; Node registry for operators
+(define-map node-registry principal { active: bool, registered-at: uint, node-type: uint })
+(define-data-var node-count uint u0)
+(define-data-var node-registry-open bool true)
+
+(define-read-only (get-node-info (node principal))
+  (map-get? node-registry node))
+
+(define-read-only (get-node-registry-params)
+  {
+    node-count: (var-get node-count),
+    registry-open: (var-get node-registry-open)
+  })
+
+(define-public (register-node (node-type uint))
+  (begin
+    (asserts! (var-get node-registry-open) (err u601))
+    (map-set node-registry tx-sender { active: true, registered-at: stacks-block-height, node-type: node-type })
+    (var-set node-count (+ (var-get node-count) u1))
+    (ok true)))
+
+(define-public (deregister-node)
+  (begin
+    (map-set node-registry tx-sender { active: false, registered-at: stacks-block-height, node-type: u0 })
+    (ok true)))
