@@ -25,3 +25,5 @@ indexer-data/
 chainhook-events/
 *.snap
 junit.xml
+carrier-keys/
+*.carrier.key
