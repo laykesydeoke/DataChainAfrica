@@ -367,3 +367,24 @@
     (asserts! (not (get fulfilled bounty)) (err u703))
     (map-set data-bounties id (merge bounty { fulfilled: true }))
     (ok true)))
+
+;; Provider reputation scores
+(define-map reputation-scores principal { score: uint, reviews: uint, last-updated: uint })
+(define-data-var min-reviews-for-score uint u3)
+(define-data-var reputation-enabled bool true)
+
+(define-read-only (get-reputation (provider principal))
+  (default-to { score: u500, reviews: u0, last-updated: u0 } (map-get? reputation-scores provider)))
+
+(define-read-only (get-reputation-params)
+  { min-reviews: (var-get min-reviews-for-score), enabled: (var-get reputation-enabled) })
+
+(define-public (submit-review (provider principal) (rating uint))
+  (begin
+    (asserts! (var-get reputation-enabled) (err u1101))
+    (asserts! (<= rating u1000) (err u1102))
+    (let ((current (get-reputation provider)))
+      (let ((new-reviews (+ (get reviews current) u1))
+            (new-score (/ (+ (* (get score current) (get reviews current)) rating) (+ (get reviews current) u1))))
+        (map-set reputation-scores provider { score: new-score, reviews: new-reviews, last-updated: stacks-block-height })
+        (ok new-score)))))
