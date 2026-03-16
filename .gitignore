@@ -43,3 +43,5 @@ metrics-snapshots/
 telemetry-cache/
 staking-logs/
 stake-snapshots/
+node-registry-cache/
+node-logs/
