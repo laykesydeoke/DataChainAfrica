@@ -364,3 +364,12 @@
 
 (define-read-only (get-total-revenue-in-stx)
     (/ (var-get total-revenue) u1000000))
+
+(define-read-only (get-billing-telemetry)
+    {
+        total-payments: (var-get payment-counter),
+        total-revenue-ustx: (var-get total-revenue),
+        total-revenue-stx: (/ (var-get total-revenue) u1000000),
+        is-paused: (var-get is-paused),
+        grace-period-blocks: (var-get grace-period-blocks)
+    })
