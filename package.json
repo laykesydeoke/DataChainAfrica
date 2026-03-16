@@ -46,7 +46,9 @@
     "test:bounties": "vitest run tests/bounty_default_test.ts tests/bounty_create_test.ts tests/bounty_fulfill_test.ts",
     "test:bounty-edge": "vitest run tests/bounty_edge_test.ts tests/bounty_invariant_test.ts tests/bounty_full_test.ts",
     "test:validators": "vitest run tests/val_default_test.ts tests/val_earn_test.ts tests/val_full_test.ts",
-    "test:val-edge": "vitest run tests/val_edge_test.ts tests/val_invariant_test.ts tests/val_coexist_test.ts"
+    "test:val-edge": "vitest run tests/val_edge_test.ts tests/val_invariant_test.ts tests/val_coexist_test.ts",
+    "test:insurance": "vitest run tests/ins_default_test.ts tests/ins_contribute_test.ts tests/ins_full_test.ts",
+    "test:ins-edge": "vitest run tests/ins_edge_test.ts tests/ins_invariant_test.ts tests/ins_coexist_test.ts"
   },
   "devDependencies": {
     "@hirosystems/clarinet-sdk": "^2.9.0",
