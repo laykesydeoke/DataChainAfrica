@@ -40,7 +40,9 @@
     "lint": "echo 'No linter configured'",
     "check": "clarinet check",
     "test:staking": "vitest run tests/staking_default_test.ts tests/staking_enabled_test.ts tests/staking_stake_test.ts",
-    "test:staking-edge": "vitest run tests/staking_edge_test.ts tests/staking_invariant_test.ts tests/staking_full_test.ts"
+    "test:staking-edge": "vitest run tests/staking_edge_test.ts tests/staking_invariant_test.ts tests/staking_full_test.ts",
+    "test:nodes": "vitest run tests/node_default_test.ts tests/node_register_test.ts tests/node_full_test.ts",
+    "test:node-edge": "vitest run tests/node_edge_test.ts tests/node_invariant_test.ts tests/node_coexist_test.ts"
   },
   "devDependencies": {
     "@hirosystems/clarinet-sdk": "^2.9.0",
