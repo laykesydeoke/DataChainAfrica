@@ -51,6 +51,15 @@
     { is-authorized: bool }
 )
 
+(define-map carrier-stats
+    { carrier: principal }
+    {
+        total-usage-reported: uint,
+        total-events: uint,
+        last-report-block: uint
+    }
+)
+
 ;; Events
 (define-data-var event-counter uint u0)
 (define-data-var plan-counter uint u0)
