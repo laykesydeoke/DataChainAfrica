@@ -1,0 +1,27 @@
+name: Governance Tests
+
+on:
+  push:
+    branches: [ feat/data-governance ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test-governance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - name: Install dependencies
+        run: npm ci
+      - name: Run governance tests
+        run: npm run test:governance
+      - name: Run plan lifecycle tests
+        run: npm run test:plan-lifecycle
+      - name: Run data limits tests
+        run: npm run test:data-limits
+      - name: Run policy tests
+        run: npm run test:policy
