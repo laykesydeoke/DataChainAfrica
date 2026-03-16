@@ -9,19 +9,27 @@ Blockchain-based mobile data tracking and billing for Nigeria. Built on the Stac
 - Transparent and immutable usage history
 - Peer-to-peer data package trading marketplace
 - Multiple plan types (daily, weekly, monthly)
+- Emergency pause controls for contract admins
+- Platform fee configuration for marketplace trades
+- Self-purchase protection for marketplace listings
 
 ## Tech Stack
 
 - **Blockchain**: Stacks
 - **Smart Contracts**: Clarity 4
 - **Frontend**: Static HTML/CSS/JS
-- **Testing**: Clarinet SDK
+- **Testing**: Clarinet SDK + Vitest
 
 ## Quick Start
 
 ```bash
 git clone https://github.com/laykesydeoke/DataChainAfrica.git
 cd DataChainAfrica
+```
+
+Install test dependencies:
+```bash
+npm install
 ```
 
 Check contracts:
@@ -31,7 +39,14 @@ clarinet check
 
 Run tests:
 ```bash
-clarinet test
+npm test
+```
+
+Run per-contract tests:
+```bash
+npm run test:billing
+npm run test:tracking
+npm run test:marketplace
 ```
 
 Start frontend:
@@ -57,22 +72,47 @@ DataChainAfrica/
 │   ├── billing_test.ts
 │   ├── marketplace_test.ts
 │   └── data-traits_test.ts
+├── .github/workflows/        # CI/CD
+├── .env.example              # Environment variable template
 ├── Clarinet.toml
 └── README.md
 ```
 
 ## Smart Contracts
 
-- **data-tracking.clar** - Records and tracks data usage per user
-- **billing.clar** - Handles plan subscriptions, payments, renewals
-- **marketplace.clar** - Peer-to-peer data package trading
-- **data-traits.clar** - Shared interface traits
+### data-tracking.clar
+Records and tracks data usage per user. Authorized carriers report usage events, which are stored immutably on-chain.
+
+### billing.clar
+Handles plan subscriptions, payments, and renewals. Supports promotional discount codes and configurable grace periods.
+
+### marketplace.clar
+Peer-to-peer data package trading. Includes platform fee, self-purchase protection, and on-chain volume tracking.
+
+### data-traits.clar
+Shared interface definitions used for cross-contract calls.
+
+## Admin Controls
+
+Contract owners have access to the following admin functions:
+
+| Contract | Function | Description |
+|---|---|---|
+| billing | `set-paused` | Pause/unpause billing |
+| billing | `update-grace-period` | Set grace period in blocks |
+| data-tracking | `set-paused` | Pause/unpause usage recording |
+| data-tracking | `deactivate-plan` | Retire a data plan |
+| marketplace | `set-paused` | Pause/unpause marketplace |
+| marketplace | `set-platform-fee` | Set fee % (max 10%) |
 
 ## Roadmap
 
 - [x] Core smart contracts
 - [x] Frontend landing page
 - [x] Clarity 4 migration
+- [x] Emergency pause mechanism
+- [x] Platform fee for marketplace
+- [x] CI/CD pipeline
 - [ ] Mobile carrier integration
 - [ ] Mobile app
 - [ ] Beta launch
