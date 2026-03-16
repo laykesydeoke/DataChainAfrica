@@ -271,6 +271,24 @@ function loadUserAnalytics(address) {
     }).catch(function () {});
 }
 
+function loadCarrierStats(carrierAddress) {
+    if (!carrierAddress) return;
+    callReadOnly('data-tracking', 'get-carrier-stats', [
+        '0x' + principalToHex(carrierAddress)
+    ]).then(function (data) {
+        if (!data || !data.okay) return;
+        var stats = parseClarityValue(data.result);
+        var usageEl = document.getElementById('carrierUsage');
+        var eventsEl = document.getElementById('carrierEvents');
+        if (usageEl && stats['total-usage-reported'] !== undefined) {
+            usageEl.textContent = stats['total-usage-reported'] + ' MB';
+        }
+        if (eventsEl && stats['total-events'] !== undefined) {
+            eventsEl.textContent = stats['total-events'];
+        }
+    }).catch(function () {});
+}
+
 function extendListing(listingId, extraBlocks) {
     if (!userAddress) return;
 
