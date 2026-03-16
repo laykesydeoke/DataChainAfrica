@@ -311,3 +311,33 @@
             total-listings: (get total-listings stats),
             active-listings: (var-get listing-counter)
         }))
+
+;; Data staking mechanism
+(define-map data-stakes principal { amount: uint, staked-at: uint, reward-rate: uint })
+(define-data-var total-staked uint u0)
+(define-data-var staking-enabled bool true)
+(define-data-var base-reward-rate uint u50)
+
+(define-read-only (get-stake (staker principal))
+  (map-get? data-stakes staker))
+
+(define-read-only (get-staking-params)
+  {
+    total-staked: (var-get total-staked),
+    staking-enabled: (var-get staking-enabled),
+    base-reward-rate: (var-get base-reward-rate)
+  })
+
+(define-public (stake-data (amount uint))
+  (begin
+    (asserts! (var-get staking-enabled) (err u501))
+    (asserts! (> amount u0) (err u502))
+    (map-set data-stakes tx-sender { amount: amount, staked-at: stacks-block-height, reward-rate: (var-get base-reward-rate) })
+    (var-set total-staked (+ (var-get total-staked) amount))
+    (ok true)))
+
+(define-public (set-staking-enabled (enabled bool))
+  (begin
+    (asserts! (is-eq tx-sender (var-get contract-owner)) (err u500))
+    (var-set staking-enabled enabled)
+    (ok true)))

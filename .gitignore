@@ -41,3 +41,5 @@ telemetry-exports/
 metrics-snapshots/
 *.telemetry.json
 telemetry-cache/
+staking-logs/
+stake-snapshots/

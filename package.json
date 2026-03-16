@@ -38,7 +38,9 @@
     "test:metrics": "vitest run tests/plan_metrics_test.ts tests/usage_report_test.ts tests/revenue_report_test.ts",
     "test:telemetry-full": "vitest run tests/telemetry_full_test.ts tests/telemetry_invariant_test.ts tests/telemetry_admin_test.ts",
     "lint": "echo 'No linter configured'",
-    "check": "clarinet check"
+    "check": "clarinet check",
+    "test:staking": "vitest run tests/staking_default_test.ts tests/staking_enabled_test.ts tests/staking_stake_test.ts",
+    "test:staking-edge": "vitest run tests/staking_edge_test.ts tests/staking_invariant_test.ts tests/staking_full_test.ts"
   },
   "devDependencies": {
     "@hirosystems/clarinet-sdk": "^2.9.0",
