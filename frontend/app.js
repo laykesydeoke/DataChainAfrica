@@ -615,3 +615,8 @@ async function loadReputation() {
   const r = await callReadOnly("marketplace", "get-reputation-params", []);
   if (r) document.getElementById("rep-data").textContent = JSON.stringify(r);
 }
+
+async function loadTreasuryParams() {
+  const r = await callReadOnly("billing", "get-treasury-params", []);
+  if (r) document.getElementById("treasury-data").textContent = JSON.stringify(r);
+}

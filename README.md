@@ -263,3 +263,13 @@ On-chain provider reputation:
 ```bash
 npm run test:reputation
 ```
+
+## Protocol Treasury
+
+On-chain fund management:
+- Contribute to treasury
+- Allocate to protocol needs
+
+```bash
+npm run test:treasury
+```
