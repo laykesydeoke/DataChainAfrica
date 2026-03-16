@@ -5,3 +5,8 @@
 history.txt
 node_modules/
 .cache/
+.env
+dist/
+coverage/
+*.log
+.DS_Store
