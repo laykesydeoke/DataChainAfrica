@@ -271,6 +271,26 @@ function loadUserAnalytics(address) {
     }).catch(function () {});
 }
 
+function loadBillingStats(address) {
+    if (!address) return;
+    Promise.all([
+        callReadOnly('billing', 'get-grace-period-remaining', ['0x' + principalToHex(address)]),
+        callReadOnly('billing', 'get-subscription-plan', ['0x' + principalToHex(address)])
+    ]).then(function (results) {
+        var graceEl = document.getElementById('graceRemaining');
+        var planEl = document.getElementById('currentPlan');
+        if (graceEl && results[0] && results[0].okay) {
+            var blocks = parseClarityUint(results[0].result);
+            graceEl.textContent = blocks > 0 ? blocks + ' blocks' : 'None';
+        }
+        if (planEl && results[1] && results[1].okay) {
+            var plans = { 1: 'Daily', 2: 'Weekly', 3: 'Monthly' };
+            var planId = parseClarityUint(results[1].result);
+            planEl.textContent = plans[planId] || 'None';
+        }
+    }).catch(function () {});
+}
+
 function loadCarrierStats(carrierAddress) {
     if (!carrierAddress) return;
     callReadOnly('data-tracking', 'get-carrier-stats', [

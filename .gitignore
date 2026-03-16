@@ -27,3 +27,5 @@ chainhook-events/
 junit.xml
 carrier-keys/
 *.carrier.key
+payment-exports/
+billing-reports/

@@ -351,3 +351,16 @@
 (define-read-only (get-user-discount (user principal))
     (default-to u0
         (get discount-rate (map-get? user-subscriptions { user: user }))))
+
+(define-read-only (get-payment-record (payment-id uint))
+    (map-get? payment-history { payment-id: payment-id }))
+
+(define-read-only (get-grace-period-remaining (user principal))
+    (match (map-get? user-subscriptions { user: user })
+        sub (if (> (get grace-period-end sub) stacks-block-height)
+                (- (get grace-period-end sub) stacks-block-height)
+                u0)
+        u0))
+
+(define-read-only (get-total-revenue-in-stx)
+    (/ (var-get total-revenue) u1000000))
