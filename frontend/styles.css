@@ -602,6 +602,21 @@ html {
     color: rgba(255,255,255,0.8);
 }
 
+/* Marketplace Overview Section */
+#mkt-analytics {
+    background: var(--white);
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: var(--shadow);
+    margin-bottom: 2rem;
+}
+
+#mkt-analytics h2 {
+    margin-bottom: 1.5rem;
+    font-size: 1.3rem;
+    color: var(--dark);
+}
+
 /* Mobile */
 @media (max-width: 768px) {
     .nav { padding: 0.8rem 1.2rem; }
