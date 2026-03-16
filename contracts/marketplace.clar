@@ -285,3 +285,14 @@
             { total-sales: u0, total-data-sold: u0, active-listings: u0 }
             (map-get? user-sales { user: user }))))
         (get active-listings sales-data)))
+
+(define-read-only (get-seller-stats (seller principal))
+    (default-to
+        { total-sales: u0, total-data-sold: u0, active-listings: u0 }
+        (map-get? user-sales { user: seller })))
+
+(define-read-only (get-seller-revenue (seller principal))
+    (get total-sales
+        (default-to
+            { total-sales: u0, total-data-sold: u0, active-listings: u0 }
+            (map-get? user-sales { user: seller }))))

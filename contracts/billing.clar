@@ -342,3 +342,12 @@
                 (- stacks-block-height (get subscription-start sub))
                 u0)
         u0))
+
+(define-read-only (get-subscription-plan (user principal))
+    (match (map-get? user-subscriptions { user: user })
+        sub (some (get current-plan-id sub))
+        none))
+
+(define-read-only (get-user-discount (user principal))
+    (default-to u0
+        (get discount-rate (map-get? user-subscriptions { user: user }))))

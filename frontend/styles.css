@@ -549,6 +549,20 @@ html {
     margin-top: 0.25rem;
 }
 
+/* Carrier Stats */
+.carrier-info {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem 1.5rem;
+    margin-top: 1rem;
+    font-size: 0.9rem;
+}
+
+.carrier-info strong {
+    color: var(--green);
+}
+
 /* Mobile */
 @media (max-width: 768px) {
     .nav { padding: 0.8rem 1.2rem; }
