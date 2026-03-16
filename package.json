@@ -33,6 +33,10 @@
     "test:plan-lifecycle": "vitest run tests/plan_deactivate_test.ts tests/plan_renewal_test.ts tests/subscription_cancel_test.ts",
     "test:data-limits": "vitest run tests/data_limit_test.ts tests/data_retention_test.ts tests/data_usage_events_test.ts",
     "test:policy": "vitest run tests/billing_policy_test.ts tests/carrier_revoke_test.ts tests/contract_invariant_test.ts",
+    "test:telemetry": "vitest run tests/telemetry_basic_test.ts tests/network_telemetry_test.ts tests/telemetry_edge_test.ts",
+    "test:telemetry-reporting": "vitest run tests/carrier_telemetry_test.ts tests/marketplace_telemetry_test.ts tests/billing_telemetry_test.ts",
+    "test:metrics": "vitest run tests/plan_metrics_test.ts tests/usage_report_test.ts tests/revenue_report_test.ts",
+    "test:telemetry-full": "vitest run tests/telemetry_full_test.ts tests/telemetry_invariant_test.ts tests/telemetry_admin_test.ts",
     "lint": "echo 'No linter configured'",
     "check": "clarinet check"
   },
