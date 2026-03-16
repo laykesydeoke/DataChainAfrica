@@ -701,3 +701,6 @@ html {
     color: #a65100;
     border-color: #a65100;
 }
+
+/* Data staking */
+#data-staking { background: #e8f5e9; padding: 1rem; margin: 1rem 0; border-radius: 4px; }
