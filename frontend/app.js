@@ -600,3 +600,8 @@ async function loadValidatorParams() {
   const r = await callReadOnly("billing", "get-validator-params", []);
   if (r) document.getElementById("validator-data").textContent = JSON.stringify(r);
 }
+
+async function loadInsuranceParams() {
+  const r = await callReadOnly("billing", "get-insurance-params", []);
+  if (r) document.getElementById("insurance-data").textContent = JSON.stringify(r);
+}

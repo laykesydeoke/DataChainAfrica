@@ -396,3 +396,29 @@
     (asserts! (> (get earned reward) (get claimed reward)) (err u801))
     (map-set validator-rewards tx-sender (merge reward { claimed: (get earned reward), last-claim: stacks-block-height }))
     (ok (- (get earned reward) (get claimed reward)))))
+
+;; Data insurance reserve fund
+(define-data-var insurance-fund uint u0)
+(define-data-var insurance-rate-bps uint u100)
+(define-data-var insurance-enabled bool true)
+(define-map insurance-claims principal { amount: uint, claimed-at: uint, approved: bool })
+
+(define-read-only (get-insurance-params)
+  { fund: (var-get insurance-fund), rate-bps: (var-get insurance-rate-bps), enabled: (var-get insurance-enabled) })
+
+(define-read-only (get-insurance-claim (claimant principal))
+  (map-get? insurance-claims claimant))
+
+(define-public (contribute-to-insurance (amount uint))
+  (begin
+    (asserts! (var-get insurance-enabled) (err u901))
+    (asserts! (> amount u0) (err u902))
+    (var-set insurance-fund (+ (var-get insurance-fund) amount))
+    (ok true)))
+
+(define-public (set-insurance-rate (rate uint))
+  (begin
+    (asserts! (is-eq tx-sender (var-get contract-owner)) (err u900))
+    (asserts! (<= rate u1000) (err u903))
+    (var-set insurance-rate-bps rate)
+    (ok true)))

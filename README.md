@@ -233,3 +233,13 @@ Reward validators for participation:
 ```bash
 npm run test:validators
 ```
+
+## Data Insurance
+
+Protect data with reserve fund:
+- Contribute to insurance pool
+- Configurable rate
+
+```bash
+npm run test:insurance
+```
