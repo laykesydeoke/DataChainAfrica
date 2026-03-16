@@ -92,6 +92,10 @@ npm run test:seller-stats
 - Per-seller and per-buyer analytics
 - Marketplace summary aggregate view
 
+### Analytics Endpoints
+
+See `docs/analytics-overview.md` for a complete reference of all analytics functions across all contracts.
+
 Start frontend:
 ```bash
 cd frontend && npx serve .
