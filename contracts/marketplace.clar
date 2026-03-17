@@ -388,3 +388,14 @@
             (new-score (/ (+ (* (get score current) (get reviews current)) rating) (+ (get reviews current) u1))))
         (map-set reputation-scores provider { score: new-score, reviews: new-reviews, last-updated: stacks-block-height })
         (ok new-score)))))
+
+;; Input validation helpers
+(define-constant ERR-ZERO-AMOUNT (err u350))
+(define-constant ERR-AMOUNT-TOO-LARGE (err u351))
+(define-constant MAX-LISTING-PRICE u1000000000)
+(define-private (validate-listing-amount (amount uint))
+  (and (> amount u0) (<= amount MAX-LISTING-PRICE)))
+(define-read-only (check-listing-validity (id uint))
+  (match (map-get? data-listings { listing-id: id })
+    listing (ok { valid: (get is-active listing), expired: (> stacks-block-height (get expiry listing)) })
+    (err u352)))
