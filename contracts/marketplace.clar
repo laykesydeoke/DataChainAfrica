@@ -416,3 +416,16 @@
     (asserts! (is-eq tx-sender contract-owner) err-owner-only)
     (map-set operator-roles addr (merge (get-operator-role addr) { active: false }))
     (ok true)))
+
+;; Event emission tracking
+(define-map marketplace-events uint { event-type: (string-ascii 32), actor: principal, data-id: uint, block: uint })
+(define-data-var event-counter uint u0)
+(define-read-only (get-event-stats)
+  { total-events: (var-get event-counter) })
+(define-read-only (get-marketplace-event (id uint))
+  (map-get? marketplace-events id))
+(define-public (emit-marketplace-event (event-type (string-ascii 32)) (data-id uint))
+  (let ((id (+ (var-get event-counter) u1)))
+    (map-set marketplace-events id { event-type: event-type, actor: tx-sender, data-id: data-id, block: stacks-block-height })
+    (var-set event-counter id)
+    (ok id)))
