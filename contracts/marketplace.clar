@@ -1298,3 +1298,7 @@
   (match (map-get? timeout-mgr-registry id)
     entry (get active entry)
     false))
+(define-read-only (get-timeout-mgr-owner (id uint))
+  (match (map-get? timeout-mgr-registry id)
+    entry (ok (get owner entry))
+    (err u931)))
