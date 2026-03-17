@@ -1,0 +1,10 @@
+{
+  "name": "accessg-config-3",
+  "version": "1.0.3",
+  "settings": {
+    "enabled": true,
+    "maxRetries": 3,
+    "timeout": 3000,
+    "logLevel": "info"
+  }
+}
