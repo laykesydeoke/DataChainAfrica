@@ -399,3 +399,20 @@
   (match (map-get? data-listings { listing-id: id })
     listing (ok { valid: (get is-active listing), expired: (> stacks-block-height (get expiry listing)) })
     (err u352)))
+
+;; Enhanced role-based access control
+(define-map operator-roles principal { role: uint, granted-at: uint, active: bool })
+(define-data-var operator-count uint u0)
+(define-read-only (get-operator-role (addr principal))
+  (default-to { role: u0, granted-at: u0, active: false } (map-get? operator-roles addr)))
+(define-public (grant-operator-role (addr principal) (role uint))
+  (begin
+    (asserts! (is-eq tx-sender contract-owner) err-owner-only)
+    (map-set operator-roles addr { role: role, granted-at: stacks-block-height, active: true })
+    (var-set operator-count (+ (var-get operator-count) u1))
+    (ok true)))
+(define-public (revoke-operator (addr principal))
+  (begin
+    (asserts! (is-eq tx-sender contract-owner) err-owner-only)
+    (map-set operator-roles addr (merge (get-operator-role addr) { active: false }))
+    (ok true)))
