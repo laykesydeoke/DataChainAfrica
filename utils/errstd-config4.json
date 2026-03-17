@@ -1,0 +1,10 @@
+{
+  "name": "errstd-config-4",
+  "version": "1.0.4",
+  "settings": {
+    "enabled": true,
+    "maxRetries": 4,
+    "timeout": 4000,
+    "logLevel": "info"
+  }
+}
