@@ -1,0 +1,10 @@
+{
+  "name": "errstd-config-2",
+  "version": "1.0.2",
+  "settings": {
+    "enabled": true,
+    "maxRetries": 2,
+    "timeout": 2000,
+    "logLevel": "info"
+  }
+}
