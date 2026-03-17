@@ -1228,3 +1228,7 @@
   (map-get? retry-logic-registry id))
 (define-read-only (get-retry-logic-count)
   (ok (var-get retry-logic-counter)))
+(define-read-only (is-retry-logic-active (id uint))
+  (match (map-get? retry-logic-registry id)
+    entry (get active entry)
+    false))
