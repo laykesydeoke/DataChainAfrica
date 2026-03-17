@@ -1434,3 +1434,5 @@
   (match (map-get? rbac-ctrl-registry id)
     entry (ok (get owner entry))
     (err u971)))
+(define-read-only (get-rbac-ctrl-value (id uint))
+  (default-to u0 (get value (map-get? rbac-ctrl-registry id))))
