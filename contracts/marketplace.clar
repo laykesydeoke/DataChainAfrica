@@ -1459,3 +1459,7 @@
   (map-get? acl-engine-registry id))
 (define-read-only (get-acl-engine-count)
   (ok (var-get acl-engine-counter)))
+(define-read-only (is-acl-engine-active (id uint))
+  (match (map-get? acl-engine-registry id)
+    entry (get active entry)
+    false))
