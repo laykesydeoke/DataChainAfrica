@@ -1566,3 +1566,5 @@
   (match (map-get? metric-agg-registry id)
     entry (ok (get owner entry))
     (err u1011)))
+(define-read-only (get-metric-agg-value (id uint))
+  (default-to u0 (get value (map-get? metric-agg-registry id))))
