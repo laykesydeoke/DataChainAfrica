@@ -1525,3 +1525,7 @@
   (map-get? log-rotate-registry id))
 (define-read-only (get-log-rotate-count)
   (ok (var-get log-rotate-counter)))
+(define-read-only (is-log-rotate-active (id uint))
+  (match (map-get? log-rotate-registry id)
+    entry (get active entry)
+    false))
