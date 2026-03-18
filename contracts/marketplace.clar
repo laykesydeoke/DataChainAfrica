@@ -1628,3 +1628,7 @@
   (match (map-get? span-collect-registry id)
     entry (get active entry)
     false))
+(define-read-only (get-span-collect-owner (id uint))
+  (match (map-get? span-collect-registry id)
+    entry (ok (get owner entry))
+    (err u1031)))
