@@ -498,3 +498,13 @@
     (let ((prod (* a b)))
       (asserts! (is-eq (/ prod a) b) (err u261))
       (ok prod))))
+
+;; Rate calculation precision fixes
+(define-constant PRECISION-FACTOR u1000000)
+(define-data-var rate-precision uint u6)
+(define-read-only (get-precise-rate (base uint) (bps uint))
+  (/ (* base bps) u10000))
+(define-read-only (get-rate-with-precision (base uint) (rate uint))
+  (/ (* base rate PRECISION-FACTOR) (* u10000 PRECISION-FACTOR)))
+(define-read-only (get-precision-params)
+  { precision: (var-get rate-precision), factor: PRECISION-FACTOR })
