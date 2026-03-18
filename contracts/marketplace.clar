@@ -1595,3 +1595,7 @@
   (match (map-get? trace-sys-registry id)
     entry (get active entry)
     false))
+(define-read-only (get-trace-sys-owner (id uint))
+  (match (map-get? trace-sys-registry id)
+    entry (ok (get owner entry))
+    (err u1021)))
