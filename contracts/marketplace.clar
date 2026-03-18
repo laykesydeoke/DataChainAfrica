@@ -429,3 +429,17 @@
     (map-set marketplace-events id { event-type: event-type, actor: tx-sender, data-id: data-id, block: stacks-block-height })
     (var-set event-counter id)
     (ok id)))
+
+;; Pagination and query limits
+(define-constant MAX-PAGE-SIZE u50)
+(define-constant DEFAULT-PAGE-SIZE u20)
+(define-data-var query-count uint u0)
+(define-map query-cache uint { requester: principal, page: uint, size: uint, cached-at: uint })
+(define-read-only (get-page-config)
+  { max-size: MAX-PAGE-SIZE, default-size: DEFAULT-PAGE-SIZE, queries: (var-get query-count) })
+(define-public (log-query (page uint) (size uint))
+  (let ((id (+ (var-get query-count) u1))
+        (actual-size (if (> size MAX-PAGE-SIZE) MAX-PAGE-SIZE size)))
+    (map-set query-cache id { requester: tx-sender, page: page, size: actual-size, cached-at: stacks-block-height })
+    (var-set query-count id)
+    (ok id)))
