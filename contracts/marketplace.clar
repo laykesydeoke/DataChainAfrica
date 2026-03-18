@@ -443,3 +443,25 @@
     (map-set query-cache id { requester: tx-sender, page: page, size: actual-size, cached-at: stacks-block-height })
     (var-set query-count id)
     (ok id)))
+
+;; Safe migration utilities
+(define-data-var migration-version uint u1)
+(define-data-var migration-locked bool false)
+(define-map migration-log uint { from-version: uint, to-version: uint, migrated-at: uint, migrator: principal })
+(define-read-only (get-migration-state)
+  { version: (var-get migration-version), locked: (var-get migration-locked) })
+(define-public (begin-migration (target-version uint))
+  (begin
+    (asserts! (is-eq tx-sender contract-owner) err-owner-only)
+    (asserts! (not (var-get migration-locked)) (err u360))
+    (asserts! (> target-version (var-get migration-version)) (err u361))
+    (var-set migration-locked true)
+    (ok true)))
+(define-public (complete-migration (target-version uint))
+  (begin
+    (asserts! (is-eq tx-sender contract-owner) err-owner-only)
+    (asserts! (var-get migration-locked) (err u362))
+    (map-set migration-log target-version { from-version: (var-get migration-version), to-version: target-version, migrated-at: stacks-block-height, migrator: tx-sender })
+    (var-set migration-version target-version)
+    (var-set migration-locked false)
+    (ok true)))
