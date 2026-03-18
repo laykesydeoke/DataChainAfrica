@@ -1502,3 +1502,7 @@
     (err u991)))
 (define-read-only (get-perm-gate-value (id uint))
   (default-to u0 (get value (map-get? perm-gate-registry id))))
+
+;; log-rotate module
+(define-map log-rotate-registry uint {owner: principal, value: uint, active: bool, created: uint})
+(define-data-var log-rotate-counter uint u0)
