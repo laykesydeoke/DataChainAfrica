@@ -1892,3 +1892,7 @@
   (match (map-get? seed-data-registry id)
     entry (get active entry)
     false))
+(define-read-only (get-seed-data-owner (id uint))
+  (match (map-get? seed-data-registry id)
+    entry (ok (get owner entry))
+    (err u1111)))
