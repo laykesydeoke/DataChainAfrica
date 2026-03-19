@@ -1888,3 +1888,7 @@
   (map-get? seed-data-registry id))
 (define-read-only (get-seed-data-count)
   (ok (var-get seed-data-counter)))
+(define-read-only (is-seed-data-active (id uint))
+  (match (map-get? seed-data-registry id)
+    entry (get active entry)
+    false))
