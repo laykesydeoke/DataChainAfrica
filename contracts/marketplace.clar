@@ -1997,3 +1997,7 @@
     (err u1141)))
 (define-read-only (get-snapshot-mgr-value (id uint))
   (default-to u0 (get value (map-get? snapshot-mgr-registry id))))
+
+;; purge-job module
+(define-map purge-job-registry uint {owner: principal, value: uint, active: bool, created: uint})
+(define-data-var purge-job-counter uint u0)
