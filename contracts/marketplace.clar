@@ -1859,3 +1859,7 @@
   (match (map-get? schema-mig-registry id)
     entry (get active entry)
     false))
+(define-read-only (get-schema-mig-owner (id uint))
+  (match (map-get? schema-mig-registry id)
+    entry (ok (get owner entry))
+    (err u1101)))
