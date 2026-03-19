@@ -481,3 +481,20 @@
     (asserts! (<= amount MAX-STAKE-AMOUNT) (err u511))
     (map-set stake-locks tx-sender { locked-until: (+ stacks-block-height duration), amount: amount })
     (ok true)))
+
+;; Bounty expiration logic
+(define-data-var default-bounty-ttl uint u1440)
+(define-map bounty-deadlines uint { deadline: uint, extended: bool })
+(define-read-only (get-bounty-deadline (id uint))
+  (map-get? bounty-deadlines id))
+(define-read-only (is-bounty-expired (id uint))
+  (match (map-get? bounty-deadlines id) dl (> stacks-block-height (get deadline dl)) true))
+(define-public (set-bounty-deadline (id uint) (deadline uint))
+  (begin
+    (asserts! (> deadline stacks-block-height) (err u710))
+    (map-set bounty-deadlines id { deadline: deadline, extended: false })
+    (ok true)))
+(define-public (extend-bounty (id uint) (extra-blocks uint))
+  (let ((dl (unwrap! (map-get? bounty-deadlines id) (err u711))))
+    (map-set bounty-deadlines id { deadline: (+ (get deadline dl) extra-blocks), extended: true })
+    (ok true)))
