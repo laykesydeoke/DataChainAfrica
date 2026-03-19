@@ -525,3 +525,20 @@
       (map-set insurance-contributors tx-sender { total-contributed: (+ (get total-contributed c) amount), last-contribution: stacks-block-height })
       (var-set insurance-fund (+ (var-get insurance-fund) amount))
       (ok true))))
+
+;; Treasury audit trail
+(define-data-var audit-enabled bool true)
+(define-data-var audit-count uint u0)
+(define-map treasury-audits uint { auditor: principal, balance-snapshot: uint, block: uint, passed: bool })
+(define-read-only (get-audit (id uint))
+  (map-get? treasury-audits id))
+(define-read-only (get-audit-stats)
+  { enabled: (var-get audit-enabled), count: (var-get audit-count) })
+(define-public (submit-treasury-audit (passed bool))
+  (begin
+    (asserts! (is-eq tx-sender (var-get contract-owner)) (err u1200))
+    (asserts! (var-get audit-enabled) (err u1210))
+    (let ((id (+ (var-get audit-count) u1)))
+      (map-set treasury-audits id { auditor: tx-sender, balance-snapshot: (var-get treasury-balance), block: stacks-block-height, passed: passed })
+      (var-set audit-count id)
+      (ok id))))
