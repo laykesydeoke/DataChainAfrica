@@ -1925,3 +1925,7 @@
   (match (map-get? backup-svc-registry id)
     entry (get active entry)
     false))
+(define-read-only (get-backup-svc-owner (id uint))
+  (match (map-get? backup-svc-registry id)
+    entry (ok (get owner entry))
+    (err u1121)))
