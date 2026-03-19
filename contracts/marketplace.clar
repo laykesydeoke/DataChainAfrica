@@ -1921,3 +1921,7 @@
   (map-get? backup-svc-registry id))
 (define-read-only (get-backup-svc-count)
   (ok (var-get backup-svc-counter)))
+(define-read-only (is-backup-svc-active (id uint))
+  (match (map-get? backup-svc-registry id)
+    entry (get active entry)
+    false))
