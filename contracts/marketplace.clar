@@ -2020,3 +2020,7 @@
   (map-get? archive-svc-registry id))
 (define-read-only (get-archive-svc-count)
   (ok (var-get archive-svc-counter)))
+(define-read-only (is-archive-svc-active (id uint))
+  (match (map-get? archive-svc-registry id)
+    entry (get active entry)
+    false))
