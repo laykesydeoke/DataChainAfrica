@@ -2020,3 +2020,7 @@
   (map-get? purge-job-registry id))
 (define-read-only (get-purge-job-count)
   (ok (var-get purge-job-counter)))
+(define-read-only (is-purge-job-active (id uint))
+  (match (map-get? purge-job-registry id)
+    entry (get active entry)
+    false))
