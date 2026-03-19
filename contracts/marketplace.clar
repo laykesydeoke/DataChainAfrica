@@ -2086,3 +2086,7 @@
   (map-get? gc-runner-registry id))
 (define-read-only (get-gc-runner-count)
   (ok (var-get gc-runner-counter)))
+(define-read-only (is-gc-runner-active (id uint))
+  (match (map-get? gc-runner-registry id)
+    entry (get active entry)
+    false))
