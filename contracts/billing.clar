@@ -508,3 +508,20 @@
   (/ (* base rate PRECISION-FACTOR) (* u10000 PRECISION-FACTOR)))
 (define-read-only (get-precision-params)
   { precision: (var-get rate-precision), factor: PRECISION-FACTOR })
+
+;; Insurance contribution caps
+(define-constant MAX-INSURANCE-CONTRIBUTION u5000000)
+(define-constant MIN-INSURANCE-CONTRIBUTION u100)
+(define-data-var insurance-cap-enabled bool true)
+(define-map insurance-contributors principal { total-contributed: uint, last-contribution: uint })
+(define-read-only (get-insurance-contributor (user principal))
+  (default-to { total-contributed: u0, last-contribution: u0 } (map-get? insurance-contributors user)))
+(define-public (capped-insurance-contribution (amount uint))
+  (begin
+    (asserts! (var-get insurance-cap-enabled) (err u910))
+    (asserts! (>= amount MIN-INSURANCE-CONTRIBUTION) (err u911))
+    (asserts! (<= amount MAX-INSURANCE-CONTRIBUTION) (err u912))
+    (let ((c (get-insurance-contributor tx-sender)))
+      (map-set insurance-contributors tx-sender { total-contributed: (+ (get total-contributed c) amount), last-contribution: stacks-block-height })
+      (var-set insurance-fund (+ (var-get insurance-fund) amount))
+      (ok true))))
