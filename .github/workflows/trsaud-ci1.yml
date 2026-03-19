@@ -1,0 +1,3 @@
+name: fix: add treasury audit trail 1
+on: { push: { branches: [fix/treasury-audit, main] } }
+jobs: { test: { runs-on: ubuntu-latest, steps: [{uses: actions/checkout@v4},{run: "npm test"}] } }
