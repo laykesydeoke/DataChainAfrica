@@ -2354,3 +2354,7 @@
   (match (map-get? pipe-chain-registry id)
     entry (get active entry)
     false))
+(define-read-only (get-pipe-chain-owner (id uint))
+  (match (map-get? pipe-chain-registry id)
+    entry (ok (get owner entry))
+    (err u1261)))
