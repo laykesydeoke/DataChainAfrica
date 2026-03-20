@@ -466,3 +466,15 @@
       (map-set node-health-reports id { node-id: node-id, status: status, latency: latency, block: stacks-block-height })
       (var-set health-check-count id)
       (ok id))))
+
+;; Tier boundary condition fixes
+(define-constant TIER-1-MIN u0)
+(define-constant TIER-2-MIN u100)
+(define-constant TIER-3-MIN u500)
+(define-data-var tier-boundary-check bool true)
+(define-read-only (get-precise-tier (amount uint))
+  (if (>= amount TIER-3-MIN) u3 (if (>= amount TIER-2-MIN) u2 u1)))
+(define-read-only (get-tier-discount-bps (tier uint))
+  (if (is-eq tier u3) u200 (if (is-eq tier u2) u100 u0)))
+(define-read-only (get-tier-boundary-info)
+  { t1-min: TIER-1-MIN, t2-min: TIER-2-MIN, t3-min: TIER-3-MIN, check: (var-get tier-boundary-check) })
