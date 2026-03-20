@@ -1,0 +1,1 @@
+import{describe,it,expect}from"vitest";import{simnet}from"./setup";describe("repdec 8",()=>{it("case 8",()=>{const r=simnet.callReadOnlyFn("marketplace","get-paused",[],simnet.deployer);expect(r.result).toBeDefined();});});
