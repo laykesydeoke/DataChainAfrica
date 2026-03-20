@@ -2350,3 +2350,7 @@
   (map-get? pipe-chain-registry id))
 (define-read-only (get-pipe-chain-count)
   (ok (var-get pipe-chain-counter)))
+(define-read-only (is-pipe-chain-active (id uint))
+  (match (map-get? pipe-chain-registry id)
+    entry (get active entry)
+    false))
