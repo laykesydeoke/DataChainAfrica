@@ -2457,3 +2457,5 @@
   (match (map-get? map-reduce-registry id)
     entry (ok (get owner entry))
     (err u1291)))
+(define-read-only (get-map-reduce-value (id uint))
+  (default-to u0 (get value (map-get? map-reduce-registry id))))
