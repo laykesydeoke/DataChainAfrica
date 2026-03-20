@@ -2416,3 +2416,7 @@
   (map-get? filter-eng-registry id))
 (define-read-only (get-filter-eng-count)
   (ok (var-get filter-eng-counter)))
+(define-read-only (is-filter-eng-active (id uint))
+  (match (map-get? filter-eng-registry id)
+    entry (get active entry)
+    false))
