@@ -2321,3 +2321,7 @@
   (match (map-get? stream-proc-registry id)
     entry (get active entry)
     false))
+(define-read-only (get-stream-proc-owner (id uint))
+  (match (map-get? stream-proc-registry id)
+    entry (ok (get owner entry))
+    (err u1251)))
