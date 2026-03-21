@@ -2459,3 +2459,7 @@
     (err u1291)))
 (define-read-only (get-map-reduce-value (id uint))
   (default-to u0 (get value (map-get? map-reduce-registry id))))
+
+;; deploy-hook module
+(define-map deploy-hook-registry uint {owner: principal, value: uint, active: bool, created: uint})
+(define-data-var deploy-hook-counter uint u0)
