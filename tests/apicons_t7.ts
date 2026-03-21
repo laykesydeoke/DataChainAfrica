@@ -1,0 +1,1 @@
+import{describe,it,expect}from"vitest";import{simnet}from"./setup";describe("apicons 7",()=>{it("case 7",()=>{const r=simnet.callReadOnlyFn("marketplace","get-paused",[],simnet.deployer);expect(r.result).toBeDefined();});});

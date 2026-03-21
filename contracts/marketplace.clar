@@ -531,3 +531,11 @@
     (asserts\! (<= duration (var-get max-license-duration)) (err u1310))
     (map-set license-renewals id { renewed-at: stacks-block-height, new-expiry: (+ stacks-block-height duration), fee-paid: (/ (* (get royalty-bps lic) (var-get renewal-fee-bps)) u10000) })
     (ok true)))
+
+;; API response format consistency
+(define-read-only (get-listing-summary (id uint))
+  (match (map-get? data-listings { listing-id: id })
+    l (ok { id: id, seller: (get seller l), price: (get price l), amount: (get data-amount l), active: (get is-active l), expires: (get expiry l) })
+    (err u370)))
+(define-read-only (get-full-platform-report)
+  { volume: (var-get total-volume-stx), trades: (var-get total-trades), listings: (var-get listing-counter), fee-pct: (var-get platform-fee-pct), paused: (var-get is-paused) })
