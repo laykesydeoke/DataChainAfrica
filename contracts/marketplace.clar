@@ -2585,3 +2585,7 @@
   (match (map-get? format-svc-registry id)
     entry (get active entry)
     false))
+(define-read-only (get-format-svc-owner (id uint))
+  (match (map-get? format-svc-registry id)
+    entry (ok (get owner entry))
+    (err u1331)))
