@@ -577,3 +577,26 @@
     (map-set grace-extensions tx-sender { extended-until: (+ stacks-block-height (var-get extended-grace-period)), extensions-used: (+ (get extensions-used ext) u1) })
     (var-set grace-extension-count (+ (var-get grace-extension-count) u1))
     (ok true)))
+
+;; Contract upgrade path management
+(define-data-var upgrade-version uint u2)
+(define-data-var upgrade-pending bool false)
+(define-data-var upgrade-target uint u0)
+(define-map upgrade-history uint { from: uint, to: uint, upgraded-at: uint, upgrader: principal })
+(define-read-only (get-upgrade-state)
+  { version: (var-get upgrade-version), pending: (var-get upgrade-pending), target: (var-get upgrade-target) })
+(define-public (propose-upgrade (target uint))
+  (begin
+    (asserts\! (is-eq tx-sender (var-get contract-owner)) (err u1200))
+    (asserts\! (> target (var-get upgrade-version)) (err u280))
+    (var-set upgrade-pending true)
+    (var-set upgrade-target target)
+    (ok true)))
+(define-public (execute-upgrade)
+  (begin
+    (asserts\! (is-eq tx-sender (var-get contract-owner)) (err u1200))
+    (asserts\! (var-get upgrade-pending) (err u281))
+    (map-set upgrade-history (var-get upgrade-target) { from: (var-get upgrade-version), to: (var-get upgrade-target), upgraded-at: stacks-block-height, upgrader: tx-sender })
+    (var-set upgrade-version (var-get upgrade-target))
+    (var-set upgrade-pending false)
+    (ok (var-get upgrade-version))))
