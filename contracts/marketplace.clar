@@ -518,3 +518,16 @@
         (map-set reputation-decay-log id { provider: provider, old-score: (get score current), new-score: new-score, block: stacks-block-height })
         (var-set decay-log-count id)
         (ok new-score)))))
+
+;; License renewal and transfer
+(define-data-var renewal-fee-bps uint u50)
+(define-data-var max-license-duration uint u52560)
+(define-map license-renewals uint { renewed-at: uint, new-expiry: uint, fee-paid: uint })
+(define-read-only (get-renewal-params)
+  { fee-bps: (var-get renewal-fee-bps), max-duration: (var-get max-license-duration) })
+(define-public (renew-license (id uint) (duration uint))
+  (let ((lic (unwrap\! (map-get? data-licenses id) (err u1303))))
+    (asserts\! (is-eq tx-sender (get licensor lic)) (err u1304))
+    (asserts\! (<= duration (var-get max-license-duration)) (err u1310))
+    (map-set license-renewals id { renewed-at: stacks-block-height, new-expiry: (+ stacks-block-height duration), fee-paid: (/ (* (get royalty-bps lic) (var-get renewal-fee-bps)) u10000) })
+    (ok true)))
