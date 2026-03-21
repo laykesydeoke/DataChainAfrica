@@ -1,0 +1,1 @@
+import{describe,it,expect}from"vitest";import{simnet}from"./setup";describe("monhook 6",()=>{it("case 6",()=>{const r=simnet.callReadOnlyFn("data-tracking","get-paused",[],simnet.deployer);expect(r.result).toBeDefined();});});
