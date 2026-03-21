@@ -1,0 +1,1 @@
+import{describe,it,expect}from"vitest";import{simnet}from"./setup";describe("subgrc 3",()=>{it("case 3",()=>{const r=simnet.callReadOnlyFn("billing","get-paused",[],simnet.deployer);expect(r.result).toBeDefined();});});

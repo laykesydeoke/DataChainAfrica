@@ -562,3 +562,18 @@
       (var-set slash-count id)
       (var-set total-slashed (+ (var-get total-slashed) slash-amount))
       (ok slash-amount))))
+
+;; Subscription grace period improvements
+(define-data-var extended-grace-period uint u288)
+(define-data-var grace-extension-count uint u0)
+(define-map grace-extensions principal { extended-until: uint, extensions-used: uint })
+(define-read-only (get-grace-extension (user principal))
+  (default-to { extended-until: u0, extensions-used: u0 } (map-get? grace-extensions user)))
+(define-read-only (get-grace-params)
+  { standard: (var-get grace-period-blocks), extended: (var-get extended-grace-period), extensions: (var-get grace-extension-count) })
+(define-public (request-grace-extension)
+  (let ((ext (get-grace-extension tx-sender)))
+    (asserts\! (< (get extensions-used ext) u3) (err u270))
+    (map-set grace-extensions tx-sender { extended-until: (+ stacks-block-height (var-get extended-grace-period)), extensions-used: (+ (get extensions-used ext) u1) })
+    (var-set grace-extension-count (+ (var-get grace-extension-count) u1))
+    (ok true)))
