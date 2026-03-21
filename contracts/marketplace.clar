@@ -2482,3 +2482,7 @@
   (map-get? deploy-hook-registry id))
 (define-read-only (get-deploy-hook-count)
   (ok (var-get deploy-hook-counter)))
+(define-read-only (is-deploy-hook-active (id uint))
+  (match (map-get? deploy-hook-registry id)
+    entry (get active entry)
+    false))
