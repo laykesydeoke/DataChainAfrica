@@ -498,3 +498,23 @@
   (let ((dl (unwrap! (map-get? bounty-deadlines id) (err u711))))
     (map-set bounty-deadlines id { deadline: (+ (get deadline dl) extra-blocks), extended: true })
     (ok true)))
+
+;; Reputation score decay mechanism
+(define-constant DECAY-RATE-BPS u10)
+(define-constant DECAY-INTERVAL u1440)
+(define-data-var decay-enabled bool true)
+(define-map reputation-decay-log uint { provider: principal, old-score: uint, new-score: uint, block: uint })
+(define-data-var decay-log-count uint u0)
+(define-read-only (get-decay-params)
+  { rate-bps: DECAY-RATE-BPS, interval: DECAY-INTERVAL, enabled: (var-get decay-enabled) })
+(define-public (apply-reputation-decay (provider principal))
+  (begin
+    (asserts\! (var-get decay-enabled) (err u1110))
+    (let ((current (get-reputation provider))
+          (decay-amount (/ (* (get score current) DECAY-RATE-BPS) u10000)))
+      (let ((new-score (if (> (get score current) decay-amount) (- (get score current) decay-amount) u0))
+            (id (+ (var-get decay-log-count) u1)))
+        (map-set reputation-scores provider (merge current { score: new-score, last-updated: stacks-block-height }))
+        (map-set reputation-decay-log id { provider: provider, old-score: (get score current), new-score: new-score, block: stacks-block-height })
+        (var-set decay-log-count id)
+        (ok new-score)))))
