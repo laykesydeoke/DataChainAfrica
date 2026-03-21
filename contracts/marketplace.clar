@@ -2573,3 +2573,7 @@
     (asserts! (is-eq tx-sender (get owner entry)) (err u1332))
     (asserts! (get active entry) (err u1333))
     (ok (map-set format-svc-registry id (merge entry {value: new-val})))))
+(define-public (deactivate-format-svc (id uint))
+  (let ((entry (unwrap! (map-get? format-svc-registry id) (err u1331))))
+    (asserts! (is-eq tx-sender (get owner entry)) (err u1332))
+    (ok (map-set format-svc-registry id (merge entry {active: false})))))
