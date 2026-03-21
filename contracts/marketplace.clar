@@ -2713,3 +2713,7 @@
   (map-get? bundle-svc-registry id))
 (define-read-only (get-bundle-svc-count)
   (ok (var-get bundle-svc-counter)))
+(define-read-only (is-bundle-svc-active (id uint))
+  (match (map-get? bundle-svc-registry id)
+    entry (get active entry)
+    false))
