@@ -485,3 +485,16 @@
     (ok id)))
 (define-read-only (get-consistency-result (id uint))
   (map-get? consistency-results id))
+
+;; Overflow protection guards
+(define-constant MAX-UINT u340282366920938463463374607431768211455)
+(define-constant SAFE-MAX u999999999999)
+(define-private (safe-add (a uint) (b uint))
+  (let ((sum (+ a b)))
+    (asserts! (>= sum a) (err u260))
+    (ok sum)))
+(define-private (safe-multiply (a uint) (b uint))
+  (if (is-eq a u0) (ok u0)
+    (let ((prod (* a b)))
+      (asserts! (is-eq (/ prod a) b) (err u261))
+      (ok prod))))
