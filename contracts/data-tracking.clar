@@ -450,3 +450,19 @@
       (map-set tracking-gaps id { start-block: start, end-block: end, severity: severity })
       (var-set gaps-detected id)
       (ok id))))
+
+;; Node health monitoring
+(define-data-var health-check-interval uint u100)
+(define-data-var health-check-count uint u0)
+(define-map node-health-reports uint { node-id: uint, status: uint, latency: uint, block: uint })
+(define-read-only (get-health-report (id uint))
+  (map-get? node-health-reports id))
+(define-read-only (get-health-stats)
+  { interval: (var-get health-check-interval), checks: (var-get health-check-count) })
+(define-public (submit-health-report (node-id uint) (status uint) (latency uint))
+  (begin
+    (asserts! (<= status u3) (err u460))
+    (let ((id (+ (var-get health-check-count) u1)))
+      (map-set node-health-reports id { node-id: node-id, status: status, latency: latency, block: stacks-block-height })
+      (var-set health-check-count id)
+      (ok id))))
