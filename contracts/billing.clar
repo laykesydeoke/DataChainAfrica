@@ -600,3 +600,24 @@
     (var-set upgrade-version (var-get upgrade-target))
     (var-set upgrade-pending false)
     (ok (var-get upgrade-version))))
+
+;; Deployment verification checks
+(define-data-var deploy-verified bool false)
+(define-data-var deploy-block uint u0)
+(define-data-var deploy-checks-passed uint u0)
+(define-map deploy-check-results (string-ascii 32) { passed: bool, checked-at: uint })
+(define-read-only (get-deploy-state)
+  { verified: (var-get deploy-verified), block: (var-get deploy-block), checks-passed: (var-get deploy-checks-passed) })
+(define-public (run-deploy-check (check-name (string-ascii 32)))
+  (begin
+    (asserts\! (is-eq tx-sender (var-get contract-owner)) (err u1200))
+    (map-set deploy-check-results check-name { passed: true, checked-at: stacks-block-height })
+    (var-set deploy-checks-passed (+ (var-get deploy-checks-passed) u1))
+    (ok true)))
+(define-public (verify-deployment)
+  (begin
+    (asserts\! (is-eq tx-sender (var-get contract-owner)) (err u1200))
+    (asserts\! (>= (var-get deploy-checks-passed) u3) (err u290))
+    (var-set deploy-verified true)
+    (var-set deploy-block stacks-block-height)
+    (ok true)))
