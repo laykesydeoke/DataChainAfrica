@@ -435,3 +435,18 @@
     (let ((discount (if (is-eq new-tier u3) u200 u100)))
       (map-set subscriber-tiers subscriber { tier: new-tier, upgraded-at: stacks-block-height, discount-bps: discount })
       (ok true))))
+
+;; Fill tracking data gaps
+(define-data-var gap-detection-enabled bool true)
+(define-data-var gaps-detected uint u0)
+(define-map tracking-gaps uint { start-block: uint, end-block: uint, severity: uint })
+(define-read-only (get-gap-stats)
+  { enabled: (var-get gap-detection-enabled), detected: (var-get gaps-detected) })
+(define-public (report-tracking-gap (start uint) (end uint) (severity uint))
+  (begin
+    (asserts! (var-get gap-detection-enabled) (err u450))
+    (asserts! (> end start) (err u451))
+    (let ((id (+ (var-get gaps-detected) u1)))
+      (map-set tracking-gaps id { start-block: start, end-block: end, severity: severity })
+      (var-set gaps-detected id)
+      (ok id))))
