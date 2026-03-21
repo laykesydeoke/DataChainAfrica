@@ -465,3 +465,19 @@
     (var-set migration-version target-version)
     (var-set migration-locked false)
     (ok true)))
+
+;; Staking safety guards
+(define-constant MIN-STAKE-AMOUNT u100)
+(define-constant MAX-STAKE-AMOUNT u10000000)
+(define-data-var staking-cooldown uint u144)
+(define-map stake-locks principal { locked-until: uint, amount: uint })
+(define-read-only (get-stake-lock (user principal))
+  (map-get? stake-locks user))
+(define-read-only (is-stake-locked (user principal))
+  (match (map-get? stake-locks user) lock (<= stacks-block-height (get locked-until lock)) false))
+(define-public (lock-stake (amount uint) (duration uint))
+  (begin
+    (asserts! (>= amount MIN-STAKE-AMOUNT) (err u510))
+    (asserts! (<= amount MAX-STAKE-AMOUNT) (err u511))
+    (map-set stake-locks tx-sender { locked-until: (+ stacks-block-height duration), amount: amount })
+    (ok true)))
