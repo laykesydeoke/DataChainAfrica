@@ -542,3 +542,23 @@
       (map-set treasury-audits id { auditor: tx-sender, balance-snapshot: (var-get treasury-balance), block: stacks-block-height, passed: passed })
       (var-set audit-count id)
       (ok id))))
+
+;; Validator slashing mechanism
+(define-constant SLASH-RATE-BPS uint u500)
+(define-data-var slashing-enabled bool true)
+(define-data-var total-slashed uint u0)
+(define-map slash-events uint { validator: principal, amount: uint, reason: (string-ascii 32), block: uint })
+(define-data-var slash-count uint u0)
+(define-read-only (get-slash-params)
+  { enabled: (var-get slashing-enabled), total-slashed: (var-get total-slashed), count: (var-get slash-count) })
+(define-public (slash-validator (validator principal) (reason (string-ascii 32)))
+  (begin
+    (asserts\! (is-eq tx-sender (var-get contract-owner)) (err u1200))
+    (asserts\! (var-get slashing-enabled) (err u820))
+    (let ((reward (get-validator-reward validator))
+          (slash-amount (/ (* (get earned reward) SLASH-RATE-BPS) u10000))
+          (id (+ (var-get slash-count) u1)))
+      (map-set slash-events id { validator: validator, amount: slash-amount, reason: reason, block: stacks-block-height })
+      (var-set slash-count id)
+      (var-set total-slashed (+ (var-get total-slashed) slash-amount))
+      (ok slash-amount))))
