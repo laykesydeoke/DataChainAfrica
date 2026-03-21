@@ -478,3 +478,23 @@
   (if (is-eq tier u3) u200 (if (is-eq tier u2) u100 u0)))
 (define-read-only (get-tier-boundary-info)
   { t1-min: TIER-1-MIN, t2-min: TIER-2-MIN, t3-min: TIER-3-MIN, check: (var-get tier-boundary-check) })
+
+;; Monitoring and alerting hooks
+(define-data-var monitoring-enabled bool true)
+(define-data-var alert-threshold uint u100)
+(define-data-var alert-count uint u0)
+(define-map monitoring-alerts uint { alert-type: (string-ascii 32), severity: uint, block: uint, resolved: bool })
+(define-read-only (get-monitoring-params)
+  { enabled: (var-get monitoring-enabled), threshold: (var-get alert-threshold), alerts: (var-get alert-count) })
+(define-public (raise-alert (alert-type (string-ascii 32)) (severity uint))
+  (begin
+    (asserts\! (var-get monitoring-enabled) (err u470))
+    (asserts\! (<= severity u5) (err u471))
+    (let ((id (+ (var-get alert-count) u1)))
+      (map-set monitoring-alerts id { alert-type: alert-type, severity: severity, block: stacks-block-height, resolved: false })
+      (var-set alert-count id)
+      (ok id))))
+(define-public (resolve-alert (id uint))
+  (let ((alert (unwrap\! (map-get? monitoring-alerts id) (err u472))))
+    (map-set monitoring-alerts id (merge alert { resolved: true }))
+    (ok true)))
