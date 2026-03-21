@@ -539,3 +539,25 @@
     (err u370)))
 (define-read-only (get-full-platform-report)
   { volume: (var-get total-volume-stx), trades: (var-get total-trades), listings: (var-get listing-counter), fee-pct: (var-get platform-fee-pct), paused: (var-get is-paused) })
+
+;; Batch operation safety limits
+(define-constant MAX-BATCH-SIZE u25)
+(define-data-var batch-op-count uint u0)
+(define-data-var batch-processing bool false)
+(define-map batch-results uint { size: uint, success-count: uint, fail-count: uint, block: uint })
+(define-read-only (get-batch-ops-params)
+  { max-size: MAX-BATCH-SIZE, total-ops: (var-get batch-op-count), processing: (var-get batch-processing) })
+(define-public (start-batch (size uint))
+  (begin
+    (asserts\! (not (var-get batch-processing)) (err u380))
+    (asserts\! (<= size MAX-BATCH-SIZE) (err u381))
+    (var-set batch-processing true)
+    (ok true)))
+(define-public (end-batch (success uint) (fail uint))
+  (begin
+    (asserts\! (var-get batch-processing) (err u382))
+    (let ((id (+ (var-get batch-op-count) u1)))
+      (map-set batch-results id { size: (+ success fail), success-count: success, fail-count: fail, block: stacks-block-height })
+      (var-set batch-op-count id)
+      (var-set batch-processing false)
+      (ok id))))
