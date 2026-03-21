@@ -1,0 +1,1 @@
+import{describe,it,expect}from"vitest";import{simnet}from"./setup";describe("tierbnd 18",()=>{it("case 18",()=>{const r=simnet.callReadOnlyFn("data-tracking","get-paused",[],simnet.deployer);expect(r.result).toBeDefined();});});
