@@ -458,3 +458,17 @@
       (var-set treasury-balance (- (var-get treasury-balance) amount))
       (var-set allocation-count id)
       (ok id))))
+
+;; Standardized error registry
+(define-constant ERR-REGISTRY-LOCKED (err u250))
+(define-constant ERR-INVALID-STATE (err u251))
+(define-constant ERR-RATE-EXCEEDED (err u252))
+(define-data-var error-log-count uint u0)
+(define-map error-log uint { code: uint, context: (string-ascii 32), block: uint })
+(define-public (log-error (code uint) (context (string-ascii 32)))
+  (let ((id (+ (var-get error-log-count) u1)))
+    (map-set error-log id { code: code, context: context, block: stacks-block-height })
+    (var-set error-log-count id)
+    (ok id)))
+(define-read-only (get-error-log (id uint))
+  (map-get? error-log id))
