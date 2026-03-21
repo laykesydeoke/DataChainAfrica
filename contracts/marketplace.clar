@@ -2651,3 +2651,7 @@
   (match (map-get? test-runner-registry id)
     entry (get active entry)
     false))
+(define-read-only (get-test-runner-owner (id uint))
+  (match (map-get? test-runner-registry id)
+    entry (ok (get owner entry))
+    (err u1351)))
