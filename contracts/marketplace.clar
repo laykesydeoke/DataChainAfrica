@@ -2639,3 +2639,7 @@
     (asserts! (is-eq tx-sender (get owner entry)) (err u1352))
     (asserts! (get active entry) (err u1353))
     (ok (map-set test-runner-registry id (merge entry {value: new-val})))))
+(define-public (deactivate-test-runner (id uint))
+  (let ((entry (unwrap! (map-get? test-runner-registry id) (err u1351))))
+    (asserts! (is-eq tx-sender (get owner entry)) (err u1352))
+    (ok (map-set test-runner-registry id (merge entry {active: false})))))
