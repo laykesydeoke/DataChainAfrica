@@ -605,3 +605,14 @@
       (var-set bkpsys-cnt id) (ok id))))
 (define-read-only (get-bkpsys-entry (id uint))
   (map-get? bkpsys-log id))
+
+;; cmprs tracking
+(define-map cmprs-log uint { v: uint, at: uint })
+(define-data-var cmprs-cnt uint u0)
+(define-public (log-cmprs (val uint))
+  (begin (asserts! (> val u0) (err u4500))
+    (let ((id (+ (var-get cmprs-cnt) u1)))
+      (map-set cmprs-log id { v: val, at: stacks-block-height })
+      (var-set cmprs-cnt id) (ok id))))
+(define-read-only (get-cmprs-entry (id uint))
+  (map-get? cmprs-log id))
