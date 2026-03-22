@@ -627,3 +627,14 @@
       (var-set athref-cnt id) (ok id))))
 (define-read-only (get-athref-entry (id uint))
   (map-get? athref-log id))
+
+;; sesmgr tracking
+(define-map sesmgr-log uint { v: uint, at: uint })
+(define-data-var sesmgr-cnt uint u0)
+(define-public (log-sesmgr (val uint))
+  (begin (asserts! (> val u0) (err u4700))
+    (let ((id (+ (var-get sesmgr-cnt) u1)))
+      (map-set sesmgr-log id { v: val, at: stacks-block-height })
+      (var-set sesmgr-cnt id) (ok id))))
+(define-read-only (get-sesmgr-entry (id uint))
+  (map-get? sesmgr-log id))
