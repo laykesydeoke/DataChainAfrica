@@ -2915,3 +2915,7 @@
   (match (map-get? kms-proxy-registry id)
     entry (get active entry)
     false))
+(define-read-only (get-kms-proxy-owner (id uint))
+  (match (map-get? kms-proxy-registry id)
+    entry (ok (get owner entry))
+    (err u1431)))
