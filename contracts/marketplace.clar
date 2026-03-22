@@ -2878,3 +2878,7 @@
   (map-get? vault-svc-registry id))
 (define-read-only (get-vault-svc-count)
   (ok (var-get vault-svc-counter)))
+(define-read-only (is-vault-svc-active (id uint))
+  (match (map-get? vault-svc-registry id)
+    entry (get active entry)
+    false))
