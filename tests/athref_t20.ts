@@ -1,0 +1,1 @@
+import{describe,it,expect}from"vitest";import{simnet}from"./setup";describe("athref 20",()=>{it("c20",()=>{const r=simnet.callReadOnlyFn("marketplace","get-last-token-id",[],simnet.deployer);expect(r.result).toBeDefined();});});
