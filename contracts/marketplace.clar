@@ -2954,3 +2954,7 @@
     (err u1441)))
 (define-read-only (get-cert-mgr-value (id uint))
   (default-to u0 (get value (map-get? cert-mgr-registry id))))
+
+;; tls-config module
+(define-map tls-config-registry uint {owner: principal, value: uint, active: bool, created: uint})
+(define-data-var tls-config-counter uint u0)
