@@ -649,3 +649,14 @@
       (var-set logrot-cnt id) (ok id))))
 (define-read-only (get-logrot-entry (id uint))
   (map-get? logrot-log id))
+
+;; metcol tracking
+(define-map metcol-log uint { v: uint, at: uint })
+(define-data-var metcol-cnt uint u0)
+(define-public (log-metcol (val uint))
+  (begin (asserts! (> val u0) (err u4900))
+    (let ((id (+ (var-get metcol-cnt) u1)))
+      (map-set metcol-log id { v: val, at: stacks-block-height })
+      (var-set metcol-cnt id) (ok id))))
+(define-read-only (get-metcol-entry (id uint))
+  (map-get? metcol-log id))
