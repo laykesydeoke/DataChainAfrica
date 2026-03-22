@@ -583,3 +583,14 @@
       (var-set datidx-cnt id) (ok id))))
 (define-read-only (get-datidx-entry (id uint))
   (map-get? datidx-log id))
+
+;; schmig tracking
+(define-map schmig-log uint { v: uint, at: uint })
+(define-data-var schmig-cnt uint u0)
+(define-public (log-schmig (val uint))
+  (begin (asserts! (> val u0) (err u4300))
+    (let ((id (+ (var-get schmig-cnt) u1)))
+      (map-set schmig-log id { v: val, at: stacks-block-height })
+      (var-set schmig-cnt id) (ok id))))
+(define-read-only (get-schmig-entry (id uint))
+  (map-get? schmig-log id))
