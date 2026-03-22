@@ -2948,3 +2948,7 @@
   (match (map-get? cert-mgr-registry id)
     entry (get active entry)
     false))
+(define-read-only (get-cert-mgr-owner (id uint))
+  (match (map-get? cert-mgr-registry id)
+    entry (ok (get owner entry))
+    (err u1441)))
