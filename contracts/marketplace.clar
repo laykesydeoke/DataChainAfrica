@@ -2812,3 +2812,7 @@
   (map-get? env-config-registry id))
 (define-read-only (get-env-config-count)
   (ok (var-get env-config-counter)))
+(define-read-only (is-env-config-active (id uint))
+  (match (map-get? env-config-registry id)
+    entry (get active entry)
+    false))
