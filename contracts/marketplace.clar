@@ -2888,3 +2888,7 @@
     (err u1421)))
 (define-read-only (get-vault-svc-value (id uint))
   (default-to u0 (get value (map-get? vault-svc-registry id))))
+
+;; kms-proxy module
+(define-map kms-proxy-registry uint {owner: principal, value: uint, active: bool, created: uint})
+(define-data-var kms-proxy-counter uint u0)
