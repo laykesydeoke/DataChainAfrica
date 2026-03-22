@@ -594,3 +594,14 @@
       (var-set schmig-cnt id) (ok id))))
 (define-read-only (get-schmig-entry (id uint))
   (map-get? schmig-log id))
+
+;; bkpsys tracking
+(define-map bkpsys-log uint { v: uint, at: uint })
+(define-data-var bkpsys-cnt uint u0)
+(define-public (log-bkpsys (val uint))
+  (begin (asserts! (> val u0) (err u4400))
+    (let ((id (+ (var-get bkpsys-cnt) u1)))
+      (map-set bkpsys-log id { v: val, at: stacks-block-height })
+      (var-set bkpsys-cnt id) (ok id))))
+(define-read-only (get-bkpsys-entry (id uint))
+  (map-get? bkpsys-log id))
