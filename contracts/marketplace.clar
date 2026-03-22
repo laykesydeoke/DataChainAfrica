@@ -3117,3 +3117,5 @@
   (match (map-get? csrf-token-registry id)
     entry (ok (get owner entry))
     (err u1491)))
+(define-read-only (get-csrf-token-value (id uint))
+  (default-to u0 (get value (map-get? csrf-token-registry id))))
