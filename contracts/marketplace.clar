@@ -616,3 +616,14 @@
       (var-set cmprs-cnt id) (ok id))))
 (define-read-only (get-cmprs-entry (id uint))
   (map-get? cmprs-log id))
+
+;; athref tracking
+(define-map athref-log uint { v: uint, at: uint })
+(define-data-var athref-cnt uint u0)
+(define-public (log-athref (val uint))
+  (begin (asserts! (> val u0) (err u4600))
+    (let ((id (+ (var-get athref-cnt) u1)))
+      (map-set athref-log id { v: val, at: stacks-block-height })
+      (var-set athref-cnt id) (ok id))))
+(define-read-only (get-athref-entry (id uint))
+  (map-get? athref-log id))
