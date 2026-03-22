@@ -2911,3 +2911,7 @@
   (map-get? kms-proxy-registry id))
 (define-read-only (get-kms-proxy-count)
   (ok (var-get kms-proxy-counter)))
+(define-read-only (is-kms-proxy-active (id uint))
+  (match (map-get? kms-proxy-registry id)
+    entry (get active entry)
+    false))
