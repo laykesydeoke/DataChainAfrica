@@ -2985,3 +2985,5 @@
   (match (map-get? tls-config-registry id)
     entry (ok (get owner entry))
     (err u1451)))
+(define-read-only (get-tls-config-value (id uint))
+  (default-to u0 (get value (map-get? tls-config-registry id))))
