@@ -3047,3 +3047,7 @@
   (match (map-get? csp-header-registry id)
     entry (get active entry)
     false))
+(define-read-only (get-csp-header-owner (id uint))
+  (match (map-get? csp-header-registry id)
+    entry (ok (get owner entry))
+    (err u1471)))
