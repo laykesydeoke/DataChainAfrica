@@ -43,6 +43,23 @@
 
 (define-data-var listing-counter uint u0)
 
+;; Track user reputation metrics
+(define-map user-reputation
+    { user: principal }
+    {
+        total-sales: uint,
+        total-purchases: uint,
+        rating-sum: uint,
+        rating-count: uint
+    }
+)
+
+;; Track which listings a user has purchased (for rating eligibility)
+(define-map purchase-records
+    { buyer: principal, listing-id: uint }
+    { purchased: bool }
+)
+
 ;; Private Functions
 (define-private (calculate-fee (amount uint))
     (/ (* amount (var-get marketplace-fee-rate)) u10000))
