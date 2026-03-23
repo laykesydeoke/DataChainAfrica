@@ -3284,3 +3284,7 @@
     (err u1541)))
 (define-read-only (get-date-parse-value (id uint))
   (default-to u0 (get value (map-get? date-parse-registry id))))
+
+;; currency-fmt module
+(define-map currency-fmt-registry uint {owner: principal, value: uint, active: bool, created: uint})
+(define-data-var currency-fmt-counter uint u0)
