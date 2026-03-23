@@ -638,3 +638,14 @@
       (var-set sesmgr-cnt id) (ok id))))
 (define-read-only (get-sesmgr-entry (id uint))
   (map-get? sesmgr-log id))
+
+;; logrot tracking
+(define-map logrot-log uint { v: uint, at: uint })
+(define-data-var logrot-cnt uint u0)
+(define-public (log-logrot (val uint))
+  (begin (asserts! (> val u0) (err u4800))
+    (let ((id (+ (var-get logrot-cnt) u1)))
+      (map-set logrot-log id { v: val, at: stacks-block-height })
+      (var-set logrot-cnt id) (ok id))))
+(define-read-only (get-logrot-entry (id uint))
+  (map-get? logrot-log id))

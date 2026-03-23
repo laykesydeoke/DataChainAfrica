@@ -1,0 +1,1 @@
+# logrot documentation 2
