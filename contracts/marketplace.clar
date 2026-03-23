@@ -759,3 +759,14 @@
       (var-set ddltr-cnt id) (ok id))))
 (define-read-only (get-ddltr-entry (id uint))
   (map-get? ddltr-log id))
+
+;; rtlim tracking
+(define-map rtlim-log uint { v: uint, at: uint })
+(define-data-var rtlim-cnt uint u0)
+(define-public (log-rtlim (val uint))
+  (begin (asserts! (> val u0) (err u5900))
+    (let ((id (+ (var-get rtlim-cnt) u1)))
+      (map-set rtlim-log id { v: val, at: stacks-block-height })
+      (var-set rtlim-cnt id) (ok id))))
+(define-read-only (get-rtlim-entry (id uint))
+  (map-get? rtlim-log id))
