@@ -144,10 +144,11 @@
     (tracking-contract <data-tracking-trait>))
     (let
         ((listing (unwrap! (map-get? data-listings { listing-id: listing-id })
-                          (err err-invalid-listing))))
+                          (err err-listing-not-found))))
         (begin
             (asserts! (get is-active listing) (err err-listing-expired))
             (asserts! (<= stacks-block-height (get expiry listing)) (err err-listing-expired))
+            (asserts! (not (is-eq tx-sender (get seller listing))) (err err-self-purchase))
             
             ;; Process payment with marketplace fee
             (unwrap! (process-payment-with-fee (get price listing) tx-sender (get seller listing))
