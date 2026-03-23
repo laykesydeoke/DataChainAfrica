@@ -3443,3 +3443,7 @@
   (match (map-get? url-encode-registry id)
     entry (get active entry)
     false))
+(define-read-only (get-url-encode-owner (id uint))
+  (match (map-get? url-encode-registry id)
+    entry (ok (get owner entry))
+    (err u1591)))
