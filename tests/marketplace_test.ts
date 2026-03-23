@@ -391,4 +391,163 @@ describe("marketplace contract", () => {
     );
     expect(result).toBeErr(Cl.uint(306));
   });
+
+  it("returns default reputation for new user", () => {
+    const result = simnet.callReadOnlyFn(
+      "marketplace",
+      "get-user-reputation",
+      [Cl.principal(wallet1)],
+      wallet1
+    );
+    expect(result.result).toBeTuple({
+      "total-sales": Cl.uint(0),
+      "total-purchases": Cl.uint(0),
+      "rating-sum": Cl.uint(0),
+      "rating-count": Cl.uint(0),
+    });
+  });
+
+  it("returns 0 average rating with no ratings", () => {
+    const result = simnet.callReadOnlyFn(
+      "marketplace",
+      "get-user-average-rating",
+      [Cl.principal(wallet1)],
+      wallet1
+    );
+    expect(result.result).toBeUint(0);
+  });
+
+  it("allows buyer to rate seller after purchase", () => {
+    setupUserWithData();
+
+    simnet.callPublicFn(
+      "marketplace",
+      "create-listing",
+      [
+        Cl.uint(100),
+        Cl.uint(5000000),
+        Cl.uint(500),
+        Cl.contractPrincipal(deployer, "data-tracking"),
+      ],
+      wallet1
+    );
+
+    simnet.callPublicFn(
+      "marketplace",
+      "purchase-listing",
+      [Cl.uint(1), Cl.contractPrincipal(deployer, "data-tracking")],
+      wallet2
+    );
+
+    const { result } = simnet.callPublicFn(
+      "marketplace",
+      "rate-seller",
+      [Cl.uint(1), Cl.uint(4)],
+      wallet2
+    );
+    expect(result).toBeOk(Cl.bool(true));
+  });
+
+  it("rejects rating from non-buyer", () => {
+    setupUserWithData();
+
+    simnet.callPublicFn(
+      "marketplace",
+      "create-listing",
+      [
+        Cl.uint(100),
+        Cl.uint(5000000),
+        Cl.uint(500),
+        Cl.contractPrincipal(deployer, "data-tracking"),
+      ],
+      wallet1
+    );
+
+    const { result } = simnet.callPublicFn(
+      "marketplace",
+      "rate-seller",
+      [Cl.uint(1), Cl.uint(5)],
+      wallet2
+    );
+    expect(result).toBeErr(Cl.uint(309));
+  });
+
+  it("rejects rating above 5", () => {
+    setupUserWithData();
+
+    simnet.callPublicFn(
+      "marketplace",
+      "create-listing",
+      [
+        Cl.uint(100),
+        Cl.uint(5000000),
+        Cl.uint(500),
+        Cl.contractPrincipal(deployer, "data-tracking"),
+      ],
+      wallet1
+    );
+    simnet.callPublicFn(
+      "marketplace",
+      "purchase-listing",
+      [Cl.uint(1), Cl.contractPrincipal(deployer, "data-tracking")],
+      wallet2
+    );
+
+    const { result } = simnet.callPublicFn(
+      "marketplace",
+      "rate-seller",
+      [Cl.uint(1), Cl.uint(6)],
+      wallet2
+    );
+    expect(result).toBeErr(Cl.uint(308));
+  });
+
+  it("updates reputation counts after purchase", () => {
+    setupUserWithData();
+
+    simnet.callPublicFn(
+      "marketplace",
+      "create-listing",
+      [
+        Cl.uint(100),
+        Cl.uint(5000000),
+        Cl.uint(500),
+        Cl.contractPrincipal(deployer, "data-tracking"),
+      ],
+      wallet1
+    );
+
+    simnet.callPublicFn(
+      "marketplace",
+      "purchase-listing",
+      [Cl.uint(1), Cl.contractPrincipal(deployer, "data-tracking")],
+      wallet2
+    );
+
+    const sellerRep = simnet.callReadOnlyFn(
+      "marketplace",
+      "get-user-reputation",
+      [Cl.principal(wallet1)],
+      wallet1
+    );
+    expect(sellerRep.result).toBeTuple({
+      "total-sales": Cl.uint(1),
+      "total-purchases": Cl.uint(0),
+      "rating-sum": Cl.uint(0),
+      "rating-count": Cl.uint(0),
+    });
+
+    const buyerRep = simnet.callReadOnlyFn(
+      "marketplace",
+      "get-user-reputation",
+      [Cl.principal(wallet2)],
+      wallet2
+    );
+    expect(buyerRep.result).toBeTuple({
+      "total-sales": Cl.uint(0),
+      "total-purchases": Cl.uint(1),
+      "rating-sum": Cl.uint(0),
+      "rating-count": Cl.uint(0),
+    });
+  });
 });

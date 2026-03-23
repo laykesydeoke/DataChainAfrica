@@ -13,6 +13,8 @@
 (define-constant err-insufficient-funds (err u305))
 (define-constant err-listing-not-found (err u306))
 (define-constant err-self-purchase (err u307))
+(define-constant err-invalid-rating (err u308))
+(define-constant err-not-buyer (err u309))
 
 ;; Marketplace fee: 2% of listing price goes to platform
 (define-data-var marketplace-fee-rate uint u200) ;; basis points (200 = 2%)
@@ -40,6 +42,23 @@
 )
 
 (define-data-var listing-counter uint u0)
+
+;; Track user reputation metrics
+(define-map user-reputation
+    { user: principal }
+    {
+        total-sales: uint,
+        total-purchases: uint,
+        rating-sum: uint,
+        rating-count: uint
+    }
+)
+
+;; Track which listings a user has purchased (for rating eligibility)
+(define-map purchase-records
+    { buyer: principal, listing-id: uint }
+    { purchased: bool }
+)
 
 ;; Private Functions
 (define-private (calculate-fee (amount uint))
@@ -186,10 +205,55 @@
                     }
                 ))
 
+            ;; Update seller reputation sale count
+            (let ((seller-rep (default-to
+                    { total-sales: u0, total-purchases: u0, rating-sum: u0, rating-count: u0 }
+                    (map-get? user-reputation { user: (get seller listing) }))))
+                (map-set user-reputation
+                    { user: (get seller listing) }
+                    (merge seller-rep { total-sales: (+ (get total-sales seller-rep) u1) })
+                ))
+
+            ;; Update buyer reputation purchase count
+            (let ((buyer-rep (default-to
+                    { total-sales: u0, total-purchases: u0, rating-sum: u0, rating-count: u0 }
+                    (map-get? user-reputation { user: tx-sender }))))
+                (map-set user-reputation
+                    { user: tx-sender }
+                    (merge buyer-rep { total-purchases: (+ (get total-purchases buyer-rep) u1) })
+                ))
+
+            ;; Record purchase for rating eligibility
+            (map-set purchase-records
+                { buyer: tx-sender, listing-id: listing-id }
+                { purchased: true }
+            )
+
             (print { action: "purchase-listing", buyer: tx-sender,
                      seller: (get seller listing), listing-id: listing-id,
                      data-amount: (get data-amount listing), price: (get price listing),
                      block: stacks-block-height })
+            (ok true))))
+
+;; Rate a seller after purchase (1-5 stars)
+(define-public (rate-seller (listing-id uint) (rating uint))
+    (let
+        ((listing (unwrap! (map-get? data-listings { listing-id: listing-id })
+                          (err err-listing-not-found)))
+         (purchase-rec (map-get? purchase-records { buyer: tx-sender, listing-id: listing-id })))
+        (asserts! (>= rating u1) (err err-invalid-rating))
+        (asserts! (<= rating u5) (err err-invalid-rating))
+        (asserts! (is-some purchase-rec) (err err-not-buyer))
+        (let ((seller-rep (default-to
+                { total-sales: u0, total-purchases: u0, rating-sum: u0, rating-count: u0 }
+                (map-get? user-reputation { user: (get seller listing) }))))
+            (map-set user-reputation
+                { user: (get seller listing) }
+                (merge seller-rep {
+                    rating-sum: (+ (get rating-sum seller-rep) rating),
+                    rating-count: (+ (get rating-count seller-rep) u1)
+                })
+            )
             (ok true))))
 
 ;; Read-only Functions
@@ -219,6 +283,19 @@
 
 (define-read-only (get-total-fees-collected)
     (var-get total-fees-collected))
+
+(define-read-only (get-user-reputation (user principal))
+    (default-to
+        { total-sales: u0, total-purchases: u0, rating-sum: u0, rating-count: u0 }
+        (map-get? user-reputation { user: user })))
+
+(define-read-only (get-user-average-rating (user principal))
+    (let ((rep (default-to
+            { total-sales: u0, total-purchases: u0, rating-sum: u0, rating-count: u0 }
+            (map-get? user-reputation { user: user }))))
+        (if (> (get rating-count rep) u0)
+            (/ (get rating-sum rep) (get rating-count rep))
+            u0)))
 
 ;; Admin: update marketplace fee rate (basis points)
 (define-public (set-marketplace-fee-rate (new-rate uint))
