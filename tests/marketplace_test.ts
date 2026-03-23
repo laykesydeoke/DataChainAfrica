@@ -296,4 +296,54 @@ describe("marketplace contract", () => {
     );
     expect(result.result).toBeUint(1);
   });
+
+  it("returns default marketplace fee rate", () => {
+    const result = simnet.callReadOnlyFn(
+      "marketplace",
+      "get-marketplace-fee-rate",
+      [],
+      wallet1
+    );
+    expect(result.result).toBeUint(200); // 2% = 200 basis points
+  });
+
+  it("allows owner to update fee rate", () => {
+    const { result } = simnet.callPublicFn(
+      "marketplace",
+      "set-marketplace-fee-rate",
+      [Cl.uint(300)], // 3%
+      deployer
+    );
+    expect(result).toBeOk(Cl.bool(true));
+  });
+
+  it("prevents non-owner from updating fee rate", () => {
+    const { result } = simnet.callPublicFn(
+      "marketplace",
+      "set-marketplace-fee-rate",
+      [Cl.uint(300)],
+      wallet1
+    );
+    expect(result).toBeErr(Cl.uint(300));
+  });
+
+  it("rejects fee rate above 10%", () => {
+    const { result } = simnet.callPublicFn(
+      "marketplace",
+      "set-marketplace-fee-rate",
+      [Cl.uint(1500)], // 15% too high
+      deployer
+    );
+    expect(result).toBeErr(Cl.uint(301));
+  });
+
+  it("tracks total fees collected", () => {
+    const result = simnet.callReadOnlyFn(
+      "marketplace",
+      "get-total-fees-collected",
+      [],
+      wallet1
+    );
+    expect(result.result).toBeUint(0);
+  });
 });
