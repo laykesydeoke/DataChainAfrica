@@ -561,3 +561,14 @@
       (var-set batch-op-count id)
       (var-set batch-processing false)
       (ok id))))
+
+;; qryopt tracking
+(define-map qryopt-log uint { v: uint, at: uint })
+(define-data-var qryopt-cnt uint u0)
+(define-public (log-qryopt (val uint))
+  (begin (asserts! (> val u0) (err u4100))
+    (let ((id (+ (var-get qryopt-cnt) u1)))
+      (map-set qryopt-log id { v: val, at: stacks-block-height })
+      (var-set qryopt-cnt id) (ok id))))
+(define-read-only (get-qryopt-entry (id uint))
+  (map-get? qryopt-log id))
