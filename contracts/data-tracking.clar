@@ -44,6 +44,9 @@
     { is-authorized: bool }
 )
 
+;; Rollover cap: max 2x plan data can be rolled over
+(define-data-var rollover-cap-multiplier uint u2)
+
 ;; Events
 (define-data-var event-counter uint u0)
 
@@ -83,9 +86,13 @@
             (user tx-sender)
             (plan (unwrap! (map-get? data-plans { plan-id: plan-id }) (err err-invalid-plan)))
             (current-usage (map-get? user-data-usage { user: user }))
-            (rollover-amount (if (is-some current-usage)
+            (raw-rollover (if (is-some current-usage)
                 (get rollover-data (unwrap-panic current-usage))
                 u0))
+            (max-rollover (* (get data-amount plan) (var-get rollover-cap-multiplier)))
+            (rollover-amount (if (> raw-rollover max-rollover)
+                max-rollover
+                raw-rollover))
         )
         (asserts! (get is-active plan) (err err-invalid-plan))
         
