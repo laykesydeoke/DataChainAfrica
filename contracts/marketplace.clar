@@ -284,6 +284,19 @@
 (define-read-only (get-total-fees-collected)
     (var-get total-fees-collected))
 
+(define-read-only (get-user-reputation (user principal))
+    (default-to
+        { total-sales: u0, total-purchases: u0, rating-sum: u0, rating-count: u0 }
+        (map-get? user-reputation { user: user })))
+
+(define-read-only (get-user-average-rating (user principal))
+    (let ((rep (default-to
+            { total-sales: u0, total-purchases: u0, rating-sum: u0, rating-count: u0 }
+            (map-get? user-reputation { user: user }))))
+        (if (> (get rating-count rep) u0)
+            (/ (get rating-sum rep) (get rating-count rep))
+            u0)))
+
 ;; Admin: update marketplace fee rate (basis points)
 (define-public (set-marketplace-fee-rate (new-rate uint))
     (begin
