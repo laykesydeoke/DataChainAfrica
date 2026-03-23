@@ -3439,3 +3439,7 @@
   (map-get? url-encode-registry id))
 (define-read-only (get-url-encode-count)
   (ok (var-get url-encode-counter)))
+(define-read-only (is-url-encode-active (id uint))
+  (match (map-get? url-encode-registry id)
+    entry (get active entry)
+    false))
