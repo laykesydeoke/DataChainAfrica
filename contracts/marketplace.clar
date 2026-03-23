@@ -235,6 +235,27 @@
                      block: stacks-block-height })
             (ok true))))
 
+;; Rate a seller after purchase (1-5 stars)
+(define-public (rate-seller (listing-id uint) (rating uint))
+    (let
+        ((listing (unwrap! (map-get? data-listings { listing-id: listing-id })
+                          (err err-listing-not-found)))
+         (purchase-rec (map-get? purchase-records { buyer: tx-sender, listing-id: listing-id })))
+        (asserts! (>= rating u1) (err err-invalid-rating))
+        (asserts! (<= rating u5) (err err-invalid-rating))
+        (asserts! (is-some purchase-rec) (err err-not-buyer))
+        (let ((seller-rep (default-to
+                { total-sales: u0, total-purchases: u0, rating-sum: u0, rating-count: u0 }
+                (map-get? user-reputation { user: (get seller listing) }))))
+            (map-set user-reputation
+                { user: (get seller listing) }
+                (merge seller-rep {
+                    rating-sum: (+ (get rating-sum seller-rep) rating),
+                    rating-count: (+ (get rating-count seller-rep) u1)
+                })
+            )
+            (ok true))))
+
 ;; Read-only Functions
 (define-read-only (get-listing (listing-id uint))
     (map-get? data-listings { listing-id: listing-id }))
