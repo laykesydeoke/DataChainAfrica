@@ -183,6 +183,10 @@
                     }
                 ))
 
+            (print { action: "purchase-listing", buyer: tx-sender,
+                     seller: (get seller listing), listing-id: listing-id,
+                     data-amount: (get data-amount listing), price: (get price listing),
+                     block: stacks-block-height })
             (ok true))))
 
 ;; Read-only Functions
