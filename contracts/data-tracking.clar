@@ -106,7 +106,10 @@
                 raw-rollover))
         )
         (asserts! (get is-active plan) (err err-invalid-plan))
-        
+
+        (print { action: "subscribe", user: user, plan-id: plan-id,
+                 data-amount: (get data-amount plan), block: stacks-block-height })
+
         (ok (map-set user-data-usage
             { user: user }
             {
@@ -157,6 +160,11 @@
                 rollover-data: (get rollover-data current-data)
             }
         )
+
+        ;; Emit event log
+        (print { action: "record-usage", user: user, carrier: carrier,
+                 usage: usage, remaining: (- (get data-balance current-data) usage),
+                 block: stacks-block-height })
 
         ;; Log usage event
         (var-set event-counter event-id)
@@ -263,6 +271,8 @@
                 last-updated: stacks-block-height
             })
         )
+        (print { action: "transfer-data-balance", from: from, to: to,
+                 amount: amount, block: stacks-block-height })
         (ok true)
     )
 )
