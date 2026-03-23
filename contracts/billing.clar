@@ -57,6 +57,17 @@
 
 (define-data-var payment-counter uint u0)
 (define-data-var grace-period-blocks uint u144)  ;; Default 24 hours worth of blocks
+(define-data-var refund-window uint u24)          ;; Blocks within which refund can be requested
+
+;; Track refund requests
+(define-map refund-requests
+    { user: principal }
+    {
+        requested-at: uint,
+        amount: uint,
+        status: (string-ascii 10)   ;; "pending" or "approved"
+    }
+)
 
 ;; Helper Functions
 (define-private (process-subscription-payment (price uint) (sender principal))
