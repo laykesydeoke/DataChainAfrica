@@ -1,0 +1,1 @@
+# strprc documentation 6
