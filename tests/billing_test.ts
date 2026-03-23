@@ -355,6 +355,91 @@ describe("billing contract", () => {
     expect(result.result).toBeNone();
   });
 
+  it("returns default refund window of 24 blocks", () => {
+    const result = simnet.callReadOnlyFn(
+      "billing",
+      "get-refund-window",
+      [],
+      deployer
+    );
+    expect(result.result).toBeUint(24);
+  });
+
+  it("allows owner to set refund window", () => {
+    const { result } = simnet.callPublicFn(
+      "billing",
+      "set-refund-window",
+      [Cl.uint(48)],
+      deployer
+    );
+    expect(result).toBeOk(Cl.bool(true));
+  });
+
+  it("allows subscriber to request refund within window", () => {
+    simnet.callPublicFn(
+      "data-tracking",
+      "set-data-plan",
+      [Cl.uint(1), Cl.uint(500), Cl.uint(144), Cl.uint(50000000)],
+      deployer
+    );
+    simnet.callPublicFn(
+      "billing",
+      "subscribe-and-pay",
+      [
+        Cl.uint(1),
+        Cl.contractPrincipal(deployer, "data-tracking"),
+        Cl.uint(0),
+      ],
+      wallet1
+    );
+
+    const { result } = simnet.callPublicFn(
+      "billing",
+      "request-refund",
+      [],
+      wallet1
+    );
+    expect(result).toBeOk(Cl.bool(true));
+  });
+
+  it("rejects refund request for non-subscriber", () => {
+    const { result } = simnet.callPublicFn(
+      "billing",
+      "request-refund",
+      [],
+      wallet2
+    );
+    expect(result).toBeErr(Cl.uint(204));
+  });
+
+  it("rejects duplicate refund request", () => {
+    simnet.callPublicFn(
+      "data-tracking",
+      "set-data-plan",
+      [Cl.uint(1), Cl.uint(500), Cl.uint(144), Cl.uint(50000000)],
+      deployer
+    );
+    simnet.callPublicFn(
+      "billing",
+      "subscribe-and-pay",
+      [
+        Cl.uint(1),
+        Cl.contractPrincipal(deployer, "data-tracking"),
+        Cl.uint(0),
+      ],
+      wallet1
+    );
+    simnet.callPublicFn("billing", "request-refund", [], wallet1);
+
+    const { result } = simnet.callPublicFn(
+      "billing",
+      "request-refund",
+      [],
+      wallet1
+    );
+    expect(result).toBeErr(Cl.uint(210));
+  });
+
   it("get-user-payment returns payment for correct user", () => {
     simnet.callPublicFn(
       "data-tracking",
