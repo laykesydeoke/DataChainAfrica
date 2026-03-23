@@ -671,3 +671,14 @@
       (var-set althr-cnt id) (ok id))))
 (define-read-only (get-althr-entry (id uint))
   (map-get? althr-log id))
+
+;; datpip tracking
+(define-map datpip-log uint { v: uint, at: uint })
+(define-data-var datpip-cnt uint u0)
+(define-public (log-datpip (val uint))
+  (begin (asserts! (> val u0) (err u5100))
+    (let ((id (+ (var-get datpip-cnt) u1)))
+      (map-set datpip-log id { v: val, at: stacks-block-height })
+      (var-set datpip-cnt id) (ok id))))
+(define-read-only (get-datpip-entry (id uint))
+  (map-get? datpip-log id))
