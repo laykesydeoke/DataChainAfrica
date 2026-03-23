@@ -726,3 +726,14 @@
       (var-set ldbal-cnt id) (ok id))))
 (define-read-only (get-ldbal-entry (id uint))
   (map-get? ldbal-log id))
+
+;; crcbrk tracking
+(define-map crcbrk-log uint { v: uint, at: uint })
+(define-data-var crcbrk-cnt uint u0)
+(define-public (log-crcbrk (val uint))
+  (begin (asserts! (> val u0) (err u5600))
+    (let ((id (+ (var-get crcbrk-cnt) u1)))
+      (map-set crcbrk-log id { v: val, at: stacks-block-height })
+      (var-set crcbrk-cnt id) (ok id))))
+(define-read-only (get-crcbrk-entry (id uint))
+  (map-get? crcbrk-log id))
