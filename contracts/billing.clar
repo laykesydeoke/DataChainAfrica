@@ -157,15 +157,18 @@
             (begin
                 (unwrap! (process-subscription-payment (get price plan-details) tx-sender)
                         (err err-payment-failed))
-                (record-subscription 
-                    tx-sender 
-                    plan-id 
-                    (get price plan-details) 
+                (record-subscription
+                    tx-sender
+                    plan-id
+                    (get price plan-details)
                     payment-id
                     discount-rate)
                 (var-set payment-counter payment-id)
                 (unwrap! (contract-call? tracking-contract subscribe-to-plan plan-id true)
                         (err err-invalid-plan))
+                (print { action: "process-subscription-payment", user: tx-sender,
+                         plan-id: plan-id, amount: (get price plan-details),
+                         discount: discount-rate, block: stacks-block-height })
                 (ok true)))))
 
 (define-public (process-renewal-payment (tracking-contract <data-tracking-trait>))
