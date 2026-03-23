@@ -551,4 +551,61 @@ describe("data-tracking contract", () => {
     );
     expect(result.result).toBeUint(0);
   });
+
+  it("returns default max plan price", () => {
+    const result = simnet.callReadOnlyFn(
+      "data-tracking",
+      "get-max-plan-price",
+      [],
+      deployer
+    );
+    expect(result.result).toBeUint(1000000000);
+  });
+
+  it("rejects plan price exceeding max-plan-price", () => {
+    const { result } = simnet.callPublicFn(
+      "data-tracking",
+      "set-data-plan",
+      [Cl.uint(9), Cl.uint(100), Cl.uint(50), Cl.uint(2000000000)],
+      deployer
+    );
+    expect(result).toBeErr(Cl.uint(108));
+  });
+
+  it("allows owner to set max-plan-price", () => {
+    const { result } = simnet.callPublicFn(
+      "data-tracking",
+      "set-max-plan-price",
+      [Cl.uint(500000000)],
+      deployer
+    );
+    expect(result).toBeOk(Cl.bool(true));
+  });
+
+  it("prevents non-owner from setting max-plan-price", () => {
+    const { result } = simnet.callPublicFn(
+      "data-tracking",
+      "set-max-plan-price",
+      [Cl.uint(500000000)],
+      wallet1
+    );
+    expect(result).toBeErr(Cl.uint(100));
+  });
+
+  it("rejects zero price in update-plan", () => {
+    simnet.callPublicFn(
+      "data-tracking",
+      "set-data-plan",
+      [Cl.uint(1), Cl.uint(500), Cl.uint(144), Cl.uint(50000000)],
+      deployer
+    );
+
+    const { result } = simnet.callPublicFn(
+      "data-tracking",
+      "update-plan",
+      [Cl.uint(1), Cl.uint(500), Cl.uint(144), Cl.uint(0)],
+      deployer
+    );
+    expect(result).toBeErr(Cl.uint(102));
+  });
 });
