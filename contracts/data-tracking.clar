@@ -106,7 +106,10 @@
                 raw-rollover))
         )
         (asserts! (get is-active plan) (err err-invalid-plan))
-        
+
+        (print { action: "subscribe", user: user, plan-id: plan-id,
+                 data-amount: (get data-amount plan), block: stacks-block-height })
+
         (ok (map-set user-data-usage
             { user: user }
             {
