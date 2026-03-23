@@ -67,6 +67,9 @@
 (define-public (set-data-plan (plan-id uint) (data-amount uint) (duration-blocks uint) (price uint))
     (begin
         (asserts! (is-eq tx-sender contract-owner) (err err-owner-only))
+        (asserts! (> data-amount u0) (err err-invalid-data))
+        (asserts! (> duration-blocks u0) (err err-invalid-data))
+        (asserts! (> price u0) (err err-invalid-data))
         (ok (map-set data-plans
             { plan-id: plan-id }
             {
