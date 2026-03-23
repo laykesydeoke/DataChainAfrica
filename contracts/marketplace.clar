@@ -100,6 +100,9 @@
                         active-listings: (+ (get active-listings current-sales) u1)
                     }
                 ))
+            (print { action: "create-listing", seller: tx-sender,
+                     listing-id: listing-id, data-amount: data-amount,
+                     price: price, block: stacks-block-height })
             (ok listing-id))))
 
 (define-public (cancel-listing (listing-id uint))
