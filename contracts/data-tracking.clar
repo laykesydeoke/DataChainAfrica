@@ -9,6 +9,7 @@
 (define-constant err-expired-plan (err u103))
 (define-constant err-plan-exists (err u104))
 (define-constant err-invalid-plan (err u105))
+(define-constant err-data-not-found (err u106))
 
 ;; Data Plan Types
 (define-constant plan-daily u1)
