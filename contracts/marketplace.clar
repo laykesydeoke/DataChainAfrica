@@ -133,6 +133,8 @@
                             u0)
                     }
                 ))
+            (print { action: "cancel-listing", seller: tx-sender,
+                     listing-id: listing-id, block: stacks-block-height })
             (ok true))))
 
 (define-public (purchase-listing 
