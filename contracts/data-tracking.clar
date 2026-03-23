@@ -321,6 +321,9 @@
     (begin
         (asserts! (is-eq tx-sender contract-owner) (err err-owner-only))
         (asserts! (is-some (map-get? data-plans { plan-id: plan-id })) (err err-invalid-plan))
+        (asserts! (> price u0) (err err-invalid-data))
+        (asserts! (<= price (var-get max-plan-price)) (err err-price-too-high))
+        (asserts! (> data-amount u0) (err err-invalid-data))
         (ok (map-set data-plans
             { plan-id: plan-id }
             {
@@ -331,6 +334,15 @@
             }
         ))
     )
+)
+
+;; Admin: configure the maximum allowed price for a plan
+(define-public (set-max-plan-price (new-max uint))
+    (begin
+        (asserts! (is-eq tx-sender contract-owner) (err err-owner-only))
+        (asserts! (> new-max u0) (err err-invalid-data))
+        (var-set max-plan-price new-max)
+        (ok true))
 )
 
 ;; Get usage data (trait-compatible wrapper)
