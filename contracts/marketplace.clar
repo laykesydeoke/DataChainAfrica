@@ -205,6 +205,30 @@
                     }
                 ))
 
+            ;; Update seller reputation sale count
+            (let ((seller-rep (default-to
+                    { total-sales: u0, total-purchases: u0, rating-sum: u0, rating-count: u0 }
+                    (map-get? user-reputation { user: (get seller listing) }))))
+                (map-set user-reputation
+                    { user: (get seller listing) }
+                    (merge seller-rep { total-sales: (+ (get total-sales seller-rep) u1) })
+                ))
+
+            ;; Update buyer reputation purchase count
+            (let ((buyer-rep (default-to
+                    { total-sales: u0, total-purchases: u0, rating-sum: u0, rating-count: u0 }
+                    (map-get? user-reputation { user: tx-sender }))))
+                (map-set user-reputation
+                    { user: tx-sender }
+                    (merge buyer-rep { total-purchases: (+ (get total-purchases buyer-rep) u1) })
+                ))
+
+            ;; Record purchase for rating eligibility
+            (map-set purchase-records
+                { buyer: tx-sender, listing-id: listing-id }
+                { purchased: true }
+            )
+
             (print { action: "purchase-listing", buyer: tx-sender,
                      seller: (get seller listing), listing-id: listing-id,
                      data-amount: (get data-amount listing), price: (get price listing),
