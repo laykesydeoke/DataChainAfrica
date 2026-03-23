@@ -13,6 +13,8 @@
 (define-constant err-no-subscription (err u204))
 (define-constant err-grace-period-expired (err u205))
 (define-constant err-invalid-discount (err u206))
+(define-constant err-promo-not-found (err u207))
+(define-constant err-payment-not-found (err u208))
 
 ;; Data Structures
 (define-map user-subscriptions
