@@ -251,7 +251,49 @@ function callReadOnly(contract, fnName, args) {
 }
 
 function principalToHex(address) {
-    return '';
+    // Encode a Stacks principal as Clarity serialized bytes
+    // Version byte: 0x16 for mainnet P2PKH, 0x1a for testnet P2PKH
+    var isTestnet = address.startsWith('ST');
+    var versionByte = isTestnet ? 0x1a : 0x16;
+    // Base58 alphabet
+    var ALPHABET = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+    // Decode base58 address to bytes
+    function base58Decode(str) {
+        var bytes = [0];
+        for (var i = 0; i < str.length; i++) {
+            var char = str[i];
+            var value = ALPHABET.indexOf(char);
+            if (value < 0) continue;
+            var carry = value;
+            for (var j = 0; j < bytes.length; j++) {
+                carry += bytes[j] * 58;
+                bytes[j] = carry & 0xff;
+                carry >>= 8;
+            }
+            while (carry > 0) {
+                bytes.push(carry & 0xff);
+                carry >>= 8;
+            }
+        }
+        // Add leading zero bytes
+        for (var k = 0; k < str.length && str[k] === '1'; k++) {
+            bytes.push(0);
+        }
+        return bytes.reverse();
+    }
+    try {
+        var decoded = base58Decode(address);
+        // decoded is [version(1)] + [hash160(20)] + [checksum(4)]
+        var hashBytes = decoded.slice(1, 21);
+        // Clarity standard principal: 0x05 (type) + version(1) + hash160(20)
+        var result = '05' + versionByte.toString(16).padStart(2, '0');
+        for (var b = 0; b < hashBytes.length; b++) {
+            result += hashBytes[b].toString(16).padStart(2, '0');
+        }
+        return result;
+    } catch (e) {
+        return '';
+    }
 }
 
 function uintToHex(value) {
