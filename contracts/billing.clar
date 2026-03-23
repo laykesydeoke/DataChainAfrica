@@ -15,6 +15,9 @@
 (define-constant err-invalid-discount (err u206))
 (define-constant err-promo-not-found (err u207))
 (define-constant err-payment-not-found (err u208))
+(define-constant err-refund-window-expired (err u209))
+(define-constant err-refund-already-requested (err u210))
+(define-constant err-no-refund-request (err u211))
 
 ;; Data Structures
 (define-map user-subscriptions
