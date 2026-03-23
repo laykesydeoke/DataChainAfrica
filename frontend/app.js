@@ -296,7 +296,15 @@ function callReadOnly(contract, fnName, args) {
             sender: CONTRACT_ADDRESS,
             arguments: args || []
         })
-    }).then(function (r) { return r.json(); });
+    }).then(function (r) {
+        if (!r.ok) {
+            throw new Error('HTTP ' + r.status + ' from ' + fnName);
+        }
+        return r.json();
+    }).catch(function (err) {
+        console.error('callReadOnly error [' + contract + '.' + fnName + ']:', err);
+        throw err;
+    });
 }
 
 function principalToHex(address) {
