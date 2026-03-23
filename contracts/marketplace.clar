@@ -11,6 +11,8 @@
 (define-constant err-listing-expired (err u303))
 (define-constant err-not-seller (err u304))
 (define-constant err-insufficient-funds (err u305))
+(define-constant err-listing-not-found (err u306))
+(define-constant err-self-purchase (err u307))
 
 ;; Marketplace fee: 2% of listing price goes to platform
 (define-data-var marketplace-fee-rate uint u200) ;; basis points (200 = 2%)
@@ -107,7 +109,7 @@
 
 (define-public (cancel-listing (listing-id uint))
     (let ((listing (unwrap! (map-get? data-listings { listing-id: listing-id })
-                           (err err-invalid-listing))))
+                           (err err-listing-not-found))))
         (asserts! (is-eq (get seller listing) tx-sender) (err err-not-seller))
         (asserts! (get is-active listing) (err err-listing-expired))
         (begin
@@ -142,10 +144,11 @@
     (tracking-contract <data-tracking-trait>))
     (let
         ((listing (unwrap! (map-get? data-listings { listing-id: listing-id })
-                          (err err-invalid-listing))))
+                          (err err-listing-not-found))))
         (begin
             (asserts! (get is-active listing) (err err-listing-expired))
             (asserts! (<= stacks-block-height (get expiry listing)) (err err-listing-expired))
+            (asserts! (not (is-eq tx-sender (get seller listing))) (err err-self-purchase))
             
             ;; Process payment with marketplace fee
             (unwrap! (process-payment-with-fee (get price listing) tx-sender (get seller listing))
