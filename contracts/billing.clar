@@ -197,6 +197,9 @@
                         payment-id
                         (get discount-rate subscription))
                     (var-set payment-counter payment-id)
+                    (print { action: "process-renewal-payment", user: user,
+                             plan-id: (get current-plan-id subscription),
+                             amount: (get price plan-details), block: stacks-block-height })
                     (ok true))))))
 
 ;; Cancel subscription - stops auto-renew and marks inactive
