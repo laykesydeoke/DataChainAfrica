@@ -12,6 +12,10 @@
 (define-constant err-not-seller (err u304))
 (define-constant err-insufficient-funds (err u305))
 
+;; Marketplace fee: 2% of listing price goes to platform
+(define-data-var marketplace-fee-rate uint u200) ;; basis points (200 = 2%)
+(define-data-var total-fees-collected uint u0)
+
 ;; Data Structures
 (define-map data-listings
     { listing-id: uint }
@@ -36,6 +40,26 @@
 (define-data-var listing-counter uint u0)
 
 ;; Private Functions
+(define-private (calculate-fee (amount uint))
+    (/ (* amount (var-get marketplace-fee-rate)) u10000))
+
+(define-private (process-payment-with-fee (amount uint) (sender principal) (recipient principal))
+    (let
+        ((fee (calculate-fee amount))
+         (seller-amount (- amount fee)))
+        ;; Pay seller
+        (unwrap! (stx-transfer? seller-amount sender recipient)
+                (err err-insufficient-funds))
+        ;; Collect fee for platform
+        (if (> fee u0)
+            (unwrap! (stx-transfer? fee sender contract-owner)
+                    (err err-insufficient-funds))
+            true)
+        (var-set total-fees-collected (+ (var-get total-fees-collected) fee))
+        (ok true)
+    )
+)
+
 (define-private (process-payment (amount uint) (sender principal) (recipient principal))
     (match (stx-transfer? amount sender recipient)
         success (ok true)
@@ -118,8 +142,8 @@
             (asserts! (get is-active listing) (err err-listing-expired))
             (asserts! (<= stacks-block-height (get expiry listing)) (err err-listing-expired))
             
-            ;; Process payment with proper error handling
-            (unwrap! (process-payment (get price listing) tx-sender (get seller listing))
+            ;; Process payment with marketplace fee
+            (unwrap! (process-payment-with-fee (get price listing) tx-sender (get seller listing))
                     (err err-insufficient-funds))
             
             ;; Update listing status
@@ -177,3 +201,17 @@
             { total-sales: u0, total-data-sold: u0, active-listings: u0 }
             (map-get? user-sales { user: user }))))
         (get active-listings sales-data)))
+
+(define-read-only (get-marketplace-fee-rate)
+    (var-get marketplace-fee-rate))
+
+(define-read-only (get-total-fees-collected)
+    (var-get total-fees-collected))
+
+;; Admin: update marketplace fee rate (basis points)
+(define-public (set-marketplace-fee-rate (new-rate uint))
+    (begin
+        (asserts! (is-eq tx-sender contract-owner) (err err-owner-only))
+        (asserts! (<= new-rate u1000) (err err-invalid-listing)) ;; max 10%
+        (var-set marketplace-fee-rate new-rate)
+        (ok true)))
