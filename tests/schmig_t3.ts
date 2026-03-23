@@ -1,0 +1,1 @@
+import{describe,it,expect}from"vitest";import{simnet}from"./setup";describe("schmig 3",()=>{it("c3",()=>{const r=simnet.callReadOnlyFn("marketplace","get-last-token-id",[],simnet.deployer);expect(r.result).toBeDefined();});});
