@@ -346,4 +346,49 @@ describe("marketplace contract", () => {
     );
     expect(result.result).toBeUint(0);
   });
+
+  it("prevents buyer from purchasing own listing", () => {
+    setupUserWithData();
+
+    simnet.callPublicFn(
+      "marketplace",
+      "create-listing",
+      [
+        Cl.uint(100),
+        Cl.uint(5000000),
+        Cl.uint(500),
+        Cl.contractPrincipal(deployer, "data-tracking"),
+      ],
+      wallet1
+    );
+
+    // Seller tries to buy their own listing
+    const { result } = simnet.callPublicFn(
+      "marketplace",
+      "purchase-listing",
+      [Cl.uint(1), Cl.contractPrincipal(deployer, "data-tracking")],
+      wallet1
+    );
+    expect(result).toBeErr(Cl.uint(307));
+  });
+
+  it("returns err-listing-not-found for nonexistent listing", () => {
+    const { result } = simnet.callPublicFn(
+      "marketplace",
+      "cancel-listing",
+      [Cl.uint(9999)],
+      wallet1
+    );
+    expect(result).toBeErr(Cl.uint(306));
+  });
+
+  it("returns err-listing-not-found when purchasing nonexistent listing", () => {
+    const { result } = simnet.callPublicFn(
+      "marketplace",
+      "purchase-listing",
+      [Cl.uint(9999), Cl.contractPrincipal(deployer, "data-tracking")],
+      wallet2
+    );
+    expect(result).toBeErr(Cl.uint(306));
+  });
 });
