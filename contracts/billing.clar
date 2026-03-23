@@ -13,6 +13,8 @@
 (define-constant err-no-subscription (err u204))
 (define-constant err-grace-period-expired (err u205))
 (define-constant err-invalid-discount (err u206))
+(define-constant err-promo-not-found (err u207))
+(define-constant err-payment-not-found (err u208))
 
 ;; Data Structures
 (define-map user-subscriptions
@@ -132,10 +134,11 @@
          (promo (map-get? promotional-rates { promo-id: promo-id })))
         (let
             ((payment-id (+ (var-get payment-counter) u1))
-             (discount-rate (if (and 
-                                (is-some promo)
-                                (< stacks-block-height (get valid-until (unwrap-panic promo))))
-                            (get discount-percentage (unwrap-panic promo))
+             (discount-rate (match promo
+                            promo-val
+                            (if (< stacks-block-height (get valid-until promo-val))
+                                (get discount-percentage promo-val)
+                                u0)
                             u0)))
             (begin
                 (unwrap! (process-subscription-payment (get price plan-details) tx-sender)
@@ -231,12 +234,12 @@
         (not (get payment-status subscription))))
 
 (define-read-only (get-user-payment (payment-id uint) (user principal))
-    (let ((payment (map-get? payment-history { payment-id: payment-id })))
-        (if (and 
-            (is-some payment)
-            (is-eq (get user (unwrap-panic payment)) user))
-            payment
-            none)))
+    (match (map-get? payment-history { payment-id: payment-id })
+        payment
+        (if (is-eq (get user payment) user)
+            (some payment)
+            none)
+        none))
 
 (define-read-only (get-subscription-status (user principal))
     (let ((subscription (default-to

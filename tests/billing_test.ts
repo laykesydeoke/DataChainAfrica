@@ -327,4 +327,60 @@ describe("billing contract", () => {
     );
     expect(result).toBeErr(Cl.uint(200));
   });
+
+  it("get-user-payment returns none for wrong user", () => {
+    simnet.callPublicFn(
+      "data-tracking",
+      "set-data-plan",
+      [Cl.uint(1), Cl.uint(500), Cl.uint(144), Cl.uint(50000000)],
+      deployer
+    );
+    simnet.callPublicFn(
+      "billing",
+      "subscribe-and-pay",
+      [
+        Cl.uint(1),
+        Cl.contractPrincipal(deployer, "data-tracking"),
+        Cl.uint(0),
+      ],
+      wallet1
+    );
+
+    const result = simnet.callReadOnlyFn(
+      "billing",
+      "get-user-payment",
+      [Cl.uint(1), Cl.principal(wallet2)],
+      wallet2
+    );
+    expect(result.result).toBeNone();
+  });
+
+  it("get-user-payment returns payment for correct user", () => {
+    simnet.callPublicFn(
+      "data-tracking",
+      "set-data-plan",
+      [Cl.uint(1), Cl.uint(500), Cl.uint(144), Cl.uint(50000000)],
+      deployer
+    );
+    simnet.callPublicFn(
+      "billing",
+      "subscribe-and-pay",
+      [
+        Cl.uint(1),
+        Cl.contractPrincipal(deployer, "data-tracking"),
+        Cl.uint(0),
+      ],
+      wallet1
+    );
+
+    const result = simnet.callReadOnlyFn(
+      "billing",
+      "get-user-payment",
+      [Cl.uint(1), Cl.principal(wallet1)],
+      wallet1
+    );
+    expect(result.result).toBeSome(
+      expect.objectContaining({ type: expect.any(Number) })
+    );
+  });
 });
