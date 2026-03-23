@@ -234,12 +234,12 @@
         (not (get payment-status subscription))))
 
 (define-read-only (get-user-payment (payment-id uint) (user principal))
-    (let ((payment (map-get? payment-history { payment-id: payment-id })))
-        (if (and 
-            (is-some payment)
-            (is-eq (get user (unwrap-panic payment)) user))
-            payment
-            none)))
+    (match (map-get? payment-history { payment-id: payment-id })
+        payment
+        (if (is-eq (get user payment) user)
+            (some payment)
+            none)
+        none))
 
 (define-read-only (get-subscription-status (user principal))
     (let ((subscription (default-to
