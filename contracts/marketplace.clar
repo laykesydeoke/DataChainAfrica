@@ -737,3 +737,14 @@
       (var-set crcbrk-cnt id) (ok id))))
 (define-read-only (get-crcbrk-entry (id uint))
   (map-get? crcbrk-log id))
+
+;; retpol tracking
+(define-map retpol-log uint { v: uint, at: uint })
+(define-data-var retpol-cnt uint u0)
+(define-public (log-retpol (val uint))
+  (begin (asserts! (> val u0) (err u5700))
+    (let ((id (+ (var-get retpol-cnt) u1)))
+      (map-set retpol-log id { v: val, at: stacks-block-height })
+      (var-set retpol-cnt id) (ok id))))
+(define-read-only (get-retpol-entry (id uint))
+  (map-get? retpol-log id))
