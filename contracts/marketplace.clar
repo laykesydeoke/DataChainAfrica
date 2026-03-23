@@ -572,3 +572,14 @@
       (var-set qryopt-cnt id) (ok id))))
 (define-read-only (get-qryopt-entry (id uint))
   (map-get? qryopt-log id))
+
+;; datidx tracking
+(define-map datidx-log uint { v: uint, at: uint })
+(define-data-var datidx-cnt uint u0)
+(define-public (log-datidx (val uint))
+  (begin (asserts! (> val u0) (err u4200))
+    (let ((id (+ (var-get datidx-cnt) u1)))
+      (map-set datidx-log id { v: val, at: stacks-block-height })
+      (var-set datidx-cnt id) (ok id))))
+(define-read-only (get-datidx-entry (id uint))
+  (map-get? datidx-log id))
