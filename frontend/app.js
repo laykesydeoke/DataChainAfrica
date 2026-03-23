@@ -95,17 +95,35 @@ function onConnected(address) {
 }
 
 function loadDashboard(address) {
-    callReadOnly('data-tracking', 'get-user-data', [
-        '0x' + principalToHex(address)
-    ])
+    var hexAddr = principalToHex(address);
+    if (!hexAddr) {
+        setDashboardPlaceholder();
+        return;
+    }
+    callReadOnly('data-tracking', 'get-user-data', ['0x' + hexAddr])
         .then(function (data) {
-            if (data && data.okay && data.result) {
-                updateDashboard(parseClarityValue(data.result));
-            } else {
+            try {
+                if (data && data.okay && data.result) {
+                    var parsed = parseClarityValue(data.result);
+                    // Handle optional some wrapper
+                    if (parsed && typeof parsed === 'object' && parsed.type === 9) {
+                        parsed = parseClarityTyped(parsed);
+                    }
+                    if (parsed && typeof parsed === 'object') {
+                        updateDashboard(parsed);
+                    } else {
+                        setDashboardPlaceholder();
+                    }
+                } else {
+                    setDashboardPlaceholder();
+                }
+            } catch (e) {
+                console.error('Dashboard parse error:', e);
                 setDashboardPlaceholder();
             }
         })
-        .catch(function () {
+        .catch(function (err) {
+            console.error('Dashboard load error:', err);
             setDashboardPlaceholder();
         });
 }
@@ -234,7 +252,38 @@ function purchaseListing(listingId) {
         alert('Please connect your wallet first');
         return;
     }
-    console.log('Purchase listing:', listingId);
+
+    if (typeof window.StacksProvider === 'undefined') {
+        alert('Stacks wallet not found');
+        return;
+    }
+
+    var txOptions = {
+        contractAddress: CONTRACT_ADDRESS,
+        contractName: 'marketplace',
+        functionName: 'purchase-listing',
+        functionArgs: [
+            uintCV(listingId),
+            contractPrincipalCV(CONTRACT_ADDRESS, 'data-tracking')
+        ],
+        appDetails: {
+            name: 'DataChain Africa',
+            icon: window.location.origin + '/favicon.svg'
+        },
+        onFinish: function (data) {
+            alert('Purchase submitted! TX: ' + data.txId);
+            loadMarketplace();
+        },
+        onCancel: function () {
+            console.log('Purchase cancelled');
+        }
+    };
+
+    if (window.openContractCall) {
+        window.openContractCall(txOptions);
+    } else if (window.StacksConnect && window.StacksConnect.openContractCall) {
+        window.StacksConnect.openContractCall(txOptions);
+    }
 }
 
 function callReadOnly(contract, fnName, args) {
@@ -247,11 +296,61 @@ function callReadOnly(contract, fnName, args) {
             sender: CONTRACT_ADDRESS,
             arguments: args || []
         })
-    }).then(function (r) { return r.json(); });
+    }).then(function (r) {
+        if (!r.ok) {
+            throw new Error('HTTP ' + r.status + ' from ' + fnName);
+        }
+        return r.json();
+    }).catch(function (err) {
+        console.error('callReadOnly error [' + contract + '.' + fnName + ']:', err);
+        throw err;
+    });
 }
 
 function principalToHex(address) {
-    return '';
+    // Encode a Stacks principal as Clarity serialized bytes
+    // Version byte: 0x16 for mainnet P2PKH, 0x1a for testnet P2PKH
+    var isTestnet = address.startsWith('ST');
+    var versionByte = isTestnet ? 0x1a : 0x16;
+    // Base58 alphabet
+    var ALPHABET = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+    // Decode base58 address to bytes
+    function base58Decode(str) {
+        var bytes = [0];
+        for (var i = 0; i < str.length; i++) {
+            var char = str[i];
+            var value = ALPHABET.indexOf(char);
+            if (value < 0) continue;
+            var carry = value;
+            for (var j = 0; j < bytes.length; j++) {
+                carry += bytes[j] * 58;
+                bytes[j] = carry & 0xff;
+                carry >>= 8;
+            }
+            while (carry > 0) {
+                bytes.push(carry & 0xff);
+                carry >>= 8;
+            }
+        }
+        // Add leading zero bytes
+        for (var k = 0; k < str.length && str[k] === '1'; k++) {
+            bytes.push(0);
+        }
+        return bytes.reverse();
+    }
+    try {
+        var decoded = base58Decode(address);
+        // decoded is [version(1)] + [hash160(20)] + [checksum(4)]
+        var hashBytes = decoded.slice(1, 21);
+        // Clarity standard principal: 0x05 (type) + version(1) + hash160(20)
+        var result = '05' + versionByte.toString(16).padStart(2, '0');
+        for (var b = 0; b < hashBytes.length; b++) {
+            result += hashBytes[b].toString(16).padStart(2, '0');
+        }
+        return result;
+    } catch (e) {
+        return '';
+    }
 }
 
 function uintToHex(value) {
@@ -276,6 +375,47 @@ function parseClarityUint(hex) {
 }
 
 function parseClarityValue(val) {
-    if (typeof val === 'object') return val;
+    // Handle already-parsed objects
+    if (typeof val === 'object' && val !== null) {
+        // Clarity response object with type tag
+        if (val.type !== undefined) {
+            return parseClarityTyped(val);
+        }
+        return val;
+    }
+    // Handle hex-encoded Clarity values
+    if (typeof val === 'string' && val.startsWith('0x')) {
+        return parseClarityHex(val.slice(2));
+    }
+    return {};
+}
+
+function parseClarityTyped(val) {
+    // type 1 = uint, type 3 = bool, type 12 = tuple, type 9 = optional some
+    if (val.type === 1) return val.value ? parseInt(val.value, 10) : 0;
+    if (val.type === 3) return val.value === true || val.value === 'true';
+    if (val.type === 12 && val.data) {
+        var result = {};
+        var keys = Object.keys(val.data);
+        for (var i = 0; i < keys.length; i++) {
+            result[keys[i]] = parseClarityTyped(val.data[keys[i]]);
+        }
+        return result;
+    }
+    if (val.type === 9 && val.value) return parseClarityTyped(val.value);
+    return val.value !== undefined ? val.value : val;
+}
+
+function parseClarityHex(hex) {
+    if (!hex || hex.length < 2) return {};
+    var typeTag = parseInt(hex.slice(0, 2), 16);
+    var data = hex.slice(2);
+    // 0x01 = uint (16 bytes big-endian)
+    if (typeTag === 0x01) return parseInt(data, 16);
+    // 0x03 = true, 0x04 = false
+    if (typeTag === 0x03) return true;
+    if (typeTag === 0x04) return false;
+    // 0x0c = tuple
+    if (typeTag === 0x0c) return {};
     return {};
 }
