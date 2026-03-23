@@ -3377,3 +3377,7 @@
   (match (map-get? text-sanitize-registry id)
     entry (get active entry)
     false))
+(define-read-only (get-text-sanitize-owner (id uint))
+  (match (map-get? text-sanitize-registry id)
+    entry (ok (get owner entry))
+    (err u1571)))
