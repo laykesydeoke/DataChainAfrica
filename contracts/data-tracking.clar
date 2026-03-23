@@ -272,6 +272,18 @@
     )
 )
 
+;; Deactivate a plan so no new subscriptions can use it
+(define-public (deactivate-plan (plan-id uint))
+    (let
+        ((plan (unwrap! (map-get? data-plans { plan-id: plan-id }) (err err-invalid-plan))))
+        (asserts! (is-eq tx-sender contract-owner) (err err-owner-only))
+        (ok (map-set data-plans
+            { plan-id: plan-id }
+            (merge plan { is-active: false })
+        ))
+    )
+)
+
 ;; Update an existing data plan
 (define-public (update-plan (plan-id uint) (data-amount uint) (duration-blocks uint) (price uint))
     (begin
