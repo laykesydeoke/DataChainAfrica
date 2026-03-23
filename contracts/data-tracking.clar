@@ -44,6 +44,9 @@
     { is-authorized: bool }
 )
 
+;; Rollover cap: max 2x plan data can be rolled over
+(define-data-var rollover-cap-multiplier uint u2)
+
 ;; Events
 (define-data-var event-counter uint u0)
 
@@ -64,6 +67,9 @@
 (define-public (set-data-plan (plan-id uint) (data-amount uint) (duration-blocks uint) (price uint))
     (begin
         (asserts! (is-eq tx-sender contract-owner) (err err-owner-only))
+        (asserts! (> data-amount u0) (err err-invalid-data))
+        (asserts! (> duration-blocks u0) (err err-invalid-data))
+        (asserts! (> price u0) (err err-invalid-data))
         (ok (map-set data-plans
             { plan-id: plan-id }
             {
@@ -83,9 +89,13 @@
             (user tx-sender)
             (plan (unwrap! (map-get? data-plans { plan-id: plan-id }) (err err-invalid-plan)))
             (current-usage (map-get? user-data-usage { user: user }))
-            (rollover-amount (if (is-some current-usage)
+            (raw-rollover (if (is-some current-usage)
                 (get rollover-data (unwrap-panic current-usage))
                 u0))
+            (max-rollover (* (get data-amount plan) (var-get rollover-cap-multiplier)))
+            (rollover-amount (if (> raw-rollover max-rollover)
+                max-rollover
+                raw-rollover))
         )
         (asserts! (get is-active plan) (err err-invalid-plan))
         
@@ -181,6 +191,62 @@
                 }
             ))
         )
+    )
+)
+
+;; Marketplace authorization for data transfers
+(define-map authorized-marketplaces
+    { marketplace: principal }
+    { is-authorized: bool }
+)
+
+(define-public (authorize-marketplace (marketplace principal))
+    (begin
+        (asserts! (is-eq tx-sender contract-owner) (err err-owner-only))
+        (ok (map-set authorized-marketplaces
+            { marketplace: marketplace }
+            { is-authorized: true }
+        ))
+    )
+)
+
+;; Transfer data balance between users (marketplace only)
+(define-public (transfer-data-balance (from principal) (to principal) (amount uint))
+    (let
+        ((is-auth (default-to { is-authorized: false }
+            (map-get? authorized-marketplaces { marketplace: tx-sender })))
+         (from-data (unwrap! (map-get? user-data-usage { user: from }) (err err-invalid-data)))
+         (to-data (default-to
+            {
+                total-data-used: u0,
+                last-updated: stacks-block-height,
+                data-balance: u0,
+                plan-expiry: stacks-block-height,
+                plan-type: u0,
+                auto-renew: false,
+                rollover-data: u0
+            }
+            (map-get? user-data-usage { user: to }))))
+        (asserts! (get is-authorized is-auth) (err err-invalid-caller))
+        (asserts! (> amount u0) (err err-invalid-data))
+        (asserts! (<= amount (get data-balance from-data)) (err err-invalid-data))
+        ;; Deduct from seller
+        (map-set user-data-usage
+            { user: from }
+            (merge from-data {
+                data-balance: (- (get data-balance from-data) amount),
+                last-updated: stacks-block-height
+            })
+        )
+        ;; Add to buyer
+        (map-set user-data-usage
+            { user: to }
+            (merge to-data {
+                data-balance: (+ (get data-balance to-data) amount),
+                last-updated: stacks-block-height
+            })
+        )
+        (ok true)
     )
 )
 

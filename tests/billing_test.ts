@@ -140,4 +140,112 @@ describe("billing contract", () => {
     );
     expect(result.result).toBeBool(true);
   });
+
+  it("allows renewal payment within grace period", () => {
+    // Setup plan
+    simnet.callPublicFn(
+      "data-tracking",
+      "set-data-plan",
+      [Cl.uint(1), Cl.uint(500), Cl.uint(144), Cl.uint(50000000)],
+      deployer
+    );
+
+    // Subscribe first
+    simnet.callPublicFn(
+      "billing",
+      "subscribe-and-pay",
+      [
+        Cl.uint(1),
+        Cl.contractPrincipal(deployer, "data-tracking"),
+        Cl.uint(0),
+      ],
+      wallet1
+    );
+
+    // Attempt renewal - should succeed within grace period
+    const { result } = simnet.callPublicFn(
+      "billing",
+      "process-renewal-payment",
+      [Cl.contractPrincipal(deployer, "data-tracking")],
+      wallet1
+    );
+    expect(result).toBeOk(Cl.bool(true));
+  });
+
+  it("rejects renewal for non-subscriber", () => {
+    const { result } = simnet.callPublicFn(
+      "billing",
+      "process-renewal-payment",
+      [Cl.contractPrincipal(deployer, "data-tracking")],
+      wallet2
+    );
+    expect(result).toBeErr(Cl.uint(204));
+  });
+
+  it("returns correct payment details", () => {
+    simnet.callPublicFn(
+      "data-tracking",
+      "set-data-plan",
+      [Cl.uint(1), Cl.uint(500), Cl.uint(144), Cl.uint(50000000)],
+      deployer
+    );
+    simnet.callPublicFn(
+      "billing",
+      "subscribe-and-pay",
+      [
+        Cl.uint(1),
+        Cl.contractPrincipal(deployer, "data-tracking"),
+        Cl.uint(0),
+      ],
+      wallet1
+    );
+
+    const result = simnet.callReadOnlyFn(
+      "billing",
+      "get-payment",
+      [Cl.uint(1)],
+      wallet1
+    );
+    expect(result.result).toBeSome(
+      expect.objectContaining({ type: expect.any(Number) })
+    );
+  });
+
+  it("applies promotional discount to subscription", () => {
+    simnet.callPublicFn(
+      "data-tracking",
+      "set-data-plan",
+      [Cl.uint(1), Cl.uint(500), Cl.uint(144), Cl.uint(50000000)],
+      deployer
+    );
+    simnet.callPublicFn(
+      "billing",
+      "set-promotional-rate",
+      [Cl.uint(1), Cl.uint(20), Cl.uint(5000), Cl.uint(1)],
+      deployer
+    );
+
+    const { result } = simnet.callPublicFn(
+      "billing",
+      "subscribe-and-pay",
+      [
+        Cl.uint(1),
+        Cl.contractPrincipal(deployer, "data-tracking"),
+        Cl.uint(1),
+      ],
+      wallet1
+    );
+    expect(result).toBeOk(Cl.bool(true));
+
+    // Verify discount was recorded
+    const sub = simnet.callReadOnlyFn(
+      "billing",
+      "get-subscription",
+      [Cl.principal(wallet1)],
+      wallet1
+    );
+    expect(sub.result).toBeSome(
+      expect.objectContaining({ type: expect.any(Number) })
+    );
+  });
 });

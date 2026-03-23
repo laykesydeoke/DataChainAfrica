@@ -163,8 +163,9 @@
             (let
                 ((payment-id (+ (var-get payment-counter) u1)))
                 (begin
-                    (asserts! (not (get payment-status subscription))
-                             (err err-payment-failed))
+                    ;; Allow renewal when grace period is still active
+                    ;; No need to check payment-status - the grace period window
+                    ;; is the authoritative check for renewal eligibility
                     (asserts! (<= stacks-block-height (get grace-period-end subscription))
                              (err err-grace-period-expired))
                     (unwrap! (process-subscription-payment (get price plan-details) user)

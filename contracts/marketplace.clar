@@ -134,6 +134,11 @@
                 }
             )
             
+            ;; Transfer data from seller to buyer
+            (unwrap! (contract-call? .data-tracking transfer-data-balance
+                (get seller listing) tx-sender (get data-amount listing))
+                (err err-insufficient-data))
+
             ;; Update seller stats
             (let ((seller-stats (unwrap! (map-get? user-sales { user: (get seller listing) })
                                        (err err-not-seller))))
@@ -141,7 +146,7 @@
                     { user: (get seller listing) }
                     {
                         total-sales: (+ (get total-sales seller-stats) u1),
-                        total-data-sold: (+ (get total-data-sold seller-stats) 
+                        total-data-sold: (+ (get total-data-sold seller-stats)
                                           (get data-amount listing)),
                         active-listings: (if (> (get active-listings seller-stats) u0)
                             (- (get active-listings seller-stats) u1)
