@@ -4,6 +4,7 @@ import { simnet } from "./setup";
 
 const deployer = simnet.deployer;
 const wallet1 = simnet.getAccounts().get("wallet_1")!;
+const wallet2 = simnet.getAccounts().get("wallet_2")!;
 
 describe("billing contract", () => {
   it("allows owner to set promotional rate", () => {
@@ -247,5 +248,83 @@ describe("billing contract", () => {
     expect(sub.result).toBeSome(
       expect.objectContaining({ type: expect.any(Number) })
     );
+  });
+
+  it("allows user to cancel subscription", () => {
+    simnet.callPublicFn(
+      "data-tracking",
+      "set-data-plan",
+      [Cl.uint(1), Cl.uint(500), Cl.uint(144), Cl.uint(50000000)],
+      deployer
+    );
+    simnet.callPublicFn(
+      "billing",
+      "subscribe-and-pay",
+      [
+        Cl.uint(1),
+        Cl.contractPrincipal(deployer, "data-tracking"),
+        Cl.uint(0),
+      ],
+      wallet1
+    );
+
+    const { result } = simnet.callPublicFn(
+      "billing",
+      "cancel-subscription",
+      [],
+      wallet1
+    );
+    expect(result).toBeOk(Cl.bool(true));
+
+    // Verify subscription is no longer active
+    const status = simnet.callReadOnlyFn(
+      "billing",
+      "get-subscription-status",
+      [Cl.principal(wallet1)],
+      wallet1
+    );
+    expect(status.result).toBeTuple({
+      "is-active": Cl.bool(false),
+      "days-remaining": Cl.uint(0),
+      "current-discount": Cl.uint(0),
+    });
+  });
+
+  it("rejects cancel for non-subscriber", () => {
+    const { result } = simnet.callPublicFn(
+      "billing",
+      "cancel-subscription",
+      [],
+      wallet2
+    );
+    expect(result).toBeErr(Cl.uint(204));
+  });
+
+  it("allows owner to set grace period", () => {
+    const { result } = simnet.callPublicFn(
+      "billing",
+      "set-grace-period",
+      [Cl.uint(288)],
+      deployer
+    );
+    expect(result).toBeOk(Cl.bool(true));
+
+    const gp = simnet.callReadOnlyFn(
+      "billing",
+      "get-grace-period",
+      [],
+      deployer
+    );
+    expect(gp.result).toBeUint(288);
+  });
+
+  it("prevents non-owner from setting grace period", () => {
+    const { result } = simnet.callPublicFn(
+      "billing",
+      "set-grace-period",
+      [Cl.uint(288)],
+      wallet1
+    );
+    expect(result).toBeErr(Cl.uint(200));
   });
 });

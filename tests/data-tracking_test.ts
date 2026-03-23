@@ -392,4 +392,77 @@ describe("data-tracking contract", () => {
       expect.objectContaining({ type: expect.any(Number) })
     );
   });
+
+  it("allows owner to deactivate a plan", () => {
+    simnet.callPublicFn(
+      "data-tracking",
+      "set-data-plan",
+      [Cl.uint(5), Cl.uint(1000), Cl.uint(288), Cl.uint(80000000)],
+      deployer
+    );
+
+    const { result } = simnet.callPublicFn(
+      "data-tracking",
+      "deactivate-plan",
+      [Cl.uint(5)],
+      deployer
+    );
+    expect(result).toBeOk(Cl.bool(true));
+
+    // Verify plan is deactivated
+    const plan = simnet.callReadOnlyFn(
+      "data-tracking",
+      "get-plan-details",
+      [Cl.uint(5)],
+      deployer
+    );
+    expect(plan.result).toBeSome(
+      Cl.tuple({
+        "data-amount": Cl.uint(1000),
+        "duration-blocks": Cl.uint(288),
+        "price": Cl.uint(80000000),
+        "is-active": Cl.bool(false),
+      })
+    );
+  });
+
+  it("prevents subscribing to deactivated plan", () => {
+    simnet.callPublicFn(
+      "data-tracking",
+      "set-data-plan",
+      [Cl.uint(5), Cl.uint(1000), Cl.uint(288), Cl.uint(80000000)],
+      deployer
+    );
+    simnet.callPublicFn(
+      "data-tracking",
+      "deactivate-plan",
+      [Cl.uint(5)],
+      deployer
+    );
+
+    const { result } = simnet.callPublicFn(
+      "data-tracking",
+      "subscribe-to-plan",
+      [Cl.uint(5), Cl.bool(false)],
+      wallet1
+    );
+    expect(result).toBeErr(Cl.uint(105));
+  });
+
+  it("prevents non-owner from deactivating plan", () => {
+    simnet.callPublicFn(
+      "data-tracking",
+      "set-data-plan",
+      [Cl.uint(5), Cl.uint(1000), Cl.uint(288), Cl.uint(80000000)],
+      deployer
+    );
+
+    const { result } = simnet.callPublicFn(
+      "data-tracking",
+      "deactivate-plan",
+      [Cl.uint(5)],
+      wallet1
+    );
+    expect(result).toBeErr(Cl.uint(100));
+  });
 });
