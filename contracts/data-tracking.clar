@@ -11,6 +11,7 @@
 (define-constant err-invalid-plan (err u105))
 (define-constant err-data-not-found (err u106))
 (define-constant err-rate-limited (err u107))
+(define-constant err-price-too-high (err u108))
 
 ;; Data Plan Types
 (define-constant plan-daily u1)
@@ -55,6 +56,9 @@
 ;; Rollover cap: max 2x plan data can be rolled over
 (define-data-var rollover-cap-multiplier uint u2)
 
+;; Max price for any plan (in microSTX) - default 1 billion microSTX = 1000 STX
+(define-data-var max-plan-price uint u1000000000)
+
 ;; Events
 (define-data-var event-counter uint u0)
 
@@ -78,6 +82,7 @@
         (asserts! (> data-amount u0) (err err-invalid-data))
         (asserts! (> duration-blocks u0) (err err-invalid-data))
         (asserts! (> price u0) (err err-invalid-data))
+        (asserts! (<= price (var-get max-plan-price)) (err err-price-too-high))
         (ok (map-set data-plans
             { plan-id: plan-id }
             {
@@ -316,6 +321,9 @@
     (begin
         (asserts! (is-eq tx-sender contract-owner) (err err-owner-only))
         (asserts! (is-some (map-get? data-plans { plan-id: plan-id })) (err err-invalid-plan))
+        (asserts! (> price u0) (err err-invalid-data))
+        (asserts! (<= price (var-get max-plan-price)) (err err-price-too-high))
+        (asserts! (> data-amount u0) (err err-invalid-data))
         (ok (map-set data-plans
             { plan-id: plan-id }
             {
@@ -326,6 +334,15 @@
             }
         ))
     )
+)
+
+;; Admin: configure the maximum allowed price for a plan
+(define-public (set-max-plan-price (new-max uint))
+    (begin
+        (asserts! (is-eq tx-sender contract-owner) (err err-owner-only))
+        (asserts! (> new-max u0) (err err-invalid-data))
+        (var-set max-plan-price new-max)
+        (ok true))
 )
 
 ;; Get usage data (trait-compatible wrapper)
@@ -386,6 +403,10 @@
     (default-to false
         (get is-authorized (map-get? authorized-carriers { carrier: carrier })))
 )
+
+;; Get max plan price setting
+(define-read-only (get-max-plan-price)
+    (var-get max-plan-price))
 
 ;; Get last usage block for a user (rate limiting)
 (define-read-only (get-last-usage-block (user principal))
