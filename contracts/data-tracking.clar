@@ -82,6 +82,7 @@
         (asserts! (> data-amount u0) (err err-invalid-data))
         (asserts! (> duration-blocks u0) (err err-invalid-data))
         (asserts! (> price u0) (err err-invalid-data))
+        (asserts! (<= price (var-get max-plan-price)) (err err-price-too-high))
         (ok (map-set data-plans
             { plan-id: plan-id }
             {
