@@ -660,3 +660,14 @@
       (var-set metcol-cnt id) (ok id))))
 (define-read-only (get-metcol-entry (id uint))
   (map-get? metcol-log id))
+
+;; althr tracking
+(define-map althr-log uint { v: uint, at: uint })
+(define-data-var althr-cnt uint u0)
+(define-public (log-althr (val uint))
+  (begin (asserts! (> val u0) (err u5000))
+    (let ((id (+ (var-get althr-cnt) u1)))
+      (map-set althr-log id { v: val, at: stacks-block-height })
+      (var-set althr-cnt id) (ok id))))
+(define-read-only (get-althr-entry (id uint))
+  (map-get? althr-log id))
