@@ -271,6 +271,8 @@
                 last-updated: stacks-block-height
             })
         )
+        (print { action: "transfer-data-balance", from: from, to: to,
+                 amount: amount, block: stacks-block-height })
         (ok true)
     )
 )
