@@ -715,3 +715,14 @@
       (var-set cachinv-cnt id) (ok id))))
 (define-read-only (get-cachinv-entry (id uint))
   (map-get? cachinv-log id))
+
+;; ldbal tracking
+(define-map ldbal-log uint { v: uint, at: uint })
+(define-data-var ldbal-cnt uint u0)
+(define-public (log-ldbal (val uint))
+  (begin (asserts! (> val u0) (err u5500))
+    (let ((id (+ (var-get ldbal-cnt) u1)))
+      (map-set ldbal-log id { v: val, at: stacks-block-height })
+      (var-set ldbal-cnt id) (ok id))))
+(define-read-only (get-ldbal-entry (id uint))
+  (map-get? ldbal-log id))
