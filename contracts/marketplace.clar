@@ -3282,3 +3282,5 @@
   (match (map-get? date-parse-registry id)
     entry (ok (get owner entry))
     (err u1541)))
+(define-read-only (get-date-parse-value (id uint))
+  (default-to u0 (get value (map-get? date-parse-registry id))))
