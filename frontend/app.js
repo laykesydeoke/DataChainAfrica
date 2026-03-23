@@ -234,7 +234,38 @@ function purchaseListing(listingId) {
         alert('Please connect your wallet first');
         return;
     }
-    console.log('Purchase listing:', listingId);
+
+    if (typeof window.StacksProvider === 'undefined') {
+        alert('Stacks wallet not found');
+        return;
+    }
+
+    var txOptions = {
+        contractAddress: CONTRACT_ADDRESS,
+        contractName: 'marketplace',
+        functionName: 'purchase-listing',
+        functionArgs: [
+            uintCV(listingId),
+            contractPrincipalCV(CONTRACT_ADDRESS, 'data-tracking')
+        ],
+        appDetails: {
+            name: 'DataChain Africa',
+            icon: window.location.origin + '/favicon.svg'
+        },
+        onFinish: function (data) {
+            alert('Purchase submitted! TX: ' + data.txId);
+            loadMarketplace();
+        },
+        onCancel: function () {
+            console.log('Purchase cancelled');
+        }
+    };
+
+    if (window.openContractCall) {
+        window.openContractCall(txOptions);
+    } else if (window.StacksConnect && window.StacksConnect.openContractCall) {
+        window.StacksConnect.openContractCall(txOptions);
+    }
 }
 
 function callReadOnly(contract, fnName, args) {
