@@ -748,3 +748,14 @@
       (var-set retpol-cnt id) (ok id))))
 (define-read-only (get-retpol-entry (id uint))
   (map-get? retpol-log id))
+
+;; ddltr tracking
+(define-map ddltr-log uint { v: uint, at: uint })
+(define-data-var ddltr-cnt uint u0)
+(define-public (log-ddltr (val uint))
+  (begin (asserts! (> val u0) (err u5800))
+    (let ((id (+ (var-get ddltr-cnt) u1)))
+      (map-set ddltr-log id { v: val, at: stacks-block-height })
+      (var-set ddltr-cnt id) (ok id))))
+(define-read-only (get-ddltr-entry (id uint))
+  (map-get? ddltr-log id))
