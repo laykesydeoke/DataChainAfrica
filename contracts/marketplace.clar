@@ -770,3 +770,14 @@
       (var-set rtlim-cnt id) (ok id))))
 (define-read-only (get-rtlim-entry (id uint))
   (map-get? rtlim-log id))
+
+;; cnpool tracking
+(define-map cnpool-log uint { v: uint, at: uint })
+(define-data-var cnpool-cnt uint u0)
+(define-public (log-cnpool (val uint))
+  (begin (asserts! (> val u0) (err u6000))
+    (let ((id (+ (var-get cnpool-cnt) u1)))
+      (map-set cnpool-log id { v: val, at: stacks-block-height })
+      (var-set cnpool-cnt id) (ok id))))
+(define-read-only (get-cnpool-entry (id uint))
+  (map-get? cnpool-log id))
