@@ -95,17 +95,35 @@ function onConnected(address) {
 }
 
 function loadDashboard(address) {
-    callReadOnly('data-tracking', 'get-user-data', [
-        '0x' + principalToHex(address)
-    ])
+    var hexAddr = principalToHex(address);
+    if (!hexAddr) {
+        setDashboardPlaceholder();
+        return;
+    }
+    callReadOnly('data-tracking', 'get-user-data', ['0x' + hexAddr])
         .then(function (data) {
-            if (data && data.okay && data.result) {
-                updateDashboard(parseClarityValue(data.result));
-            } else {
+            try {
+                if (data && data.okay && data.result) {
+                    var parsed = parseClarityValue(data.result);
+                    // Handle optional some wrapper
+                    if (parsed && typeof parsed === 'object' && parsed.type === 9) {
+                        parsed = parseClarityTyped(parsed);
+                    }
+                    if (parsed && typeof parsed === 'object') {
+                        updateDashboard(parsed);
+                    } else {
+                        setDashboardPlaceholder();
+                    }
+                } else {
+                    setDashboardPlaceholder();
+                }
+            } catch (e) {
+                console.error('Dashboard parse error:', e);
                 setDashboardPlaceholder();
             }
         })
-        .catch(function () {
+        .catch(function (err) {
+            console.error('Dashboard load error:', err);
             setDashboardPlaceholder();
         });
 }
