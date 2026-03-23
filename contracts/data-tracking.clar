@@ -161,6 +161,11 @@
             }
         )
 
+        ;; Emit event log
+        (print { action: "record-usage", user: user, carrier: carrier,
+                 usage: usage, remaining: (- (get data-balance current-data) usage),
+                 block: stacks-block-height })
+
         ;; Log usage event
         (var-set event-counter event-id)
         (ok (map-set usage-events
