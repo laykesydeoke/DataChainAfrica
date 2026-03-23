@@ -56,6 +56,9 @@
 ;; Rollover cap: max 2x plan data can be rolled over
 (define-data-var rollover-cap-multiplier uint u2)
 
+;; Max price for any plan (in microSTX) - default 1 billion microSTX = 1000 STX
+(define-data-var max-plan-price uint u1000000000)
+
 ;; Events
 (define-data-var event-counter uint u0)
 
