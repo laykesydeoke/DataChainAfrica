@@ -465,4 +465,90 @@ describe("data-tracking contract", () => {
     );
     expect(result).toBeErr(Cl.uint(100));
   });
+
+  it("rejects duplicate usage recording in same block", () => {
+    simnet.callPublicFn(
+      "data-tracking",
+      "set-data-plan",
+      [Cl.uint(1), Cl.uint(500), Cl.uint(144), Cl.uint(50000000)],
+      deployer
+    );
+    simnet.callPublicFn(
+      "data-tracking",
+      "subscribe-to-plan",
+      [Cl.uint(1), Cl.bool(false)],
+      wallet1
+    );
+    simnet.callPublicFn(
+      "data-tracking",
+      "authorize-carrier",
+      [Cl.principal(wallet2)],
+      deployer
+    );
+
+    // First recording succeeds
+    const first = simnet.callPublicFn(
+      "data-tracking",
+      "record-usage",
+      [Cl.principal(wallet1), Cl.uint(10)],
+      wallet2
+    );
+    expect(first.result).toBeOk(Cl.bool(true));
+
+    // Second recording in same block should be rate-limited
+    const second = simnet.callPublicFn(
+      "data-tracking",
+      "record-usage",
+      [Cl.principal(wallet1), Cl.uint(10)],
+      wallet2
+    );
+    expect(second.result).toBeErr(Cl.uint(107));
+  });
+
+  it("returns last usage block after recording", () => {
+    simnet.callPublicFn(
+      "data-tracking",
+      "set-data-plan",
+      [Cl.uint(1), Cl.uint(500), Cl.uint(144), Cl.uint(50000000)],
+      deployer
+    );
+    simnet.callPublicFn(
+      "data-tracking",
+      "subscribe-to-plan",
+      [Cl.uint(1), Cl.bool(false)],
+      wallet1
+    );
+    simnet.callPublicFn(
+      "data-tracking",
+      "authorize-carrier",
+      [Cl.principal(wallet2)],
+      deployer
+    );
+    simnet.callPublicFn(
+      "data-tracking",
+      "record-usage",
+      [Cl.principal(wallet1), Cl.uint(10)],
+      wallet2
+    );
+
+    const result = simnet.callReadOnlyFn(
+      "data-tracking",
+      "get-last-usage-block",
+      [Cl.principal(wallet1)],
+      wallet1
+    );
+    // Should be greater than 0 after recording
+    const val = result.result;
+    expect(val).not.toEqual(Cl.uint(0));
+  });
+
+  it("returns 0 last-usage-block for user with no recordings", () => {
+    const result = simnet.callReadOnlyFn(
+      "data-tracking",
+      "get-last-usage-block",
+      [Cl.principal(wallet2)],
+      wallet2
+    );
+    expect(result.result).toBeUint(0);
+  });
 });
