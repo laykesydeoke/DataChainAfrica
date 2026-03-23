@@ -11,6 +11,8 @@
 (define-constant err-listing-expired (err u303))
 (define-constant err-not-seller (err u304))
 (define-constant err-insufficient-funds (err u305))
+(define-constant err-listing-not-found (err u306))
+(define-constant err-self-purchase (err u307))
 
 ;; Marketplace fee: 2% of listing price goes to platform
 (define-data-var marketplace-fee-rate uint u200) ;; basis points (200 = 2%)
