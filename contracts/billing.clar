@@ -179,6 +179,28 @@
                     (var-set payment-counter payment-id)
                     (ok true))))))
 
+;; Cancel subscription - stops auto-renew and marks inactive
+(define-public (cancel-subscription)
+    (let
+        ((subscription (unwrap! (map-get? user-subscriptions { user: tx-sender })
+                               (err err-no-subscription))))
+        (map-set user-subscriptions
+            { user: tx-sender }
+            (merge subscription {
+                payment-status: false,
+                grace-period-end: stacks-block-height
+            })
+        )
+        (ok true)))
+
+;; Owner can update grace period duration
+(define-public (set-grace-period (blocks uint))
+    (begin
+        (asserts! (is-eq tx-sender contract-owner) (err err-owner-only))
+        (asserts! (> blocks u0) (err err-invalid-plan))
+        (var-set grace-period-blocks blocks)
+        (ok true)))
+
 ;; Read-only Functions
 (define-read-only (get-subscription (user principal))
     (map-get? user-subscriptions { user: user }))
