@@ -376,3 +376,9 @@
     (default-to false
         (get is-authorized (map-get? authorized-carriers { carrier: carrier })))
 )
+
+;; Get last usage block for a user (rate limiting)
+(define-read-only (get-last-usage-block (user principal))
+    (default-to u0
+        (get block-height (map-get? last-usage-block { user: user })))
+)
