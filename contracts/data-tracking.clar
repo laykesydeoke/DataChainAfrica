@@ -90,8 +90,8 @@
             (user tx-sender)
             (plan (unwrap! (map-get? data-plans { plan-id: plan-id }) (err err-invalid-plan)))
             (current-usage (map-get? user-data-usage { user: user }))
-            (raw-rollover (if (is-some current-usage)
-                (get rollover-data (unwrap-panic current-usage))
+            (raw-rollover (match current-usage
+                usage-data (get rollover-data usage-data)
                 u0))
             (max-rollover (* (get data-amount plan) (var-get rollover-cap-multiplier)))
             (rollover-amount (if (> raw-rollover max-rollover)
