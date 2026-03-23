@@ -11,6 +11,7 @@
 (define-constant err-invalid-plan (err u105))
 (define-constant err-data-not-found (err u106))
 (define-constant err-rate-limited (err u107))
+(define-constant err-price-too-high (err u108))
 
 ;; Data Plan Types
 (define-constant plan-daily u1)
