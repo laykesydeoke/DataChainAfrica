@@ -15,6 +15,9 @@
 (define-constant err-invalid-discount (err u206))
 (define-constant err-promo-not-found (err u207))
 (define-constant err-payment-not-found (err u208))
+(define-constant err-refund-window-expired (err u209))
+(define-constant err-refund-already-requested (err u210))
+(define-constant err-no-refund-request (err u211))
 
 ;; Data Structures
 (define-map user-subscriptions
@@ -54,6 +57,17 @@
 
 (define-data-var payment-counter uint u0)
 (define-data-var grace-period-blocks uint u144)  ;; Default 24 hours worth of blocks
+(define-data-var refund-window uint u24)          ;; Blocks within which refund can be requested
+
+;; Track refund requests
+(define-map refund-requests
+    { user: principal }
+    {
+        requested-at: uint,
+        amount: uint,
+        status: (string-ascii 10)   ;; "pending" or "approved"
+    }
+)
 
 ;; Helper Functions
 (define-private (process-subscription-payment (price uint) (sender principal))
@@ -196,6 +210,48 @@
         )
         (ok true)))
 
+;; Request refund within the refund window
+(define-public (request-refund)
+    (let
+        ((subscription (unwrap! (map-get? user-subscriptions { user: tx-sender })
+                               (err err-no-subscription)))
+         (window-end (+ (get subscription-start subscription) (var-get refund-window))))
+        (asserts! (<= stacks-block-height window-end) (err err-refund-window-expired))
+        (asserts! (is-none (map-get? refund-requests { user: tx-sender }))
+                 (err err-refund-already-requested))
+        (map-set refund-requests
+            { user: tx-sender }
+            {
+                requested-at: stacks-block-height,
+                amount: (get total-payments subscription),
+                status: "pending"
+            }
+        )
+        (ok true)))
+
+;; Owner approves refund and sends STX back to user
+(define-public (process-refund (user principal))
+    (let
+        ((refund-req (unwrap! (map-get? refund-requests { user: user })
+                             (err err-no-refund-request))))
+        (asserts! (is-eq tx-sender contract-owner) (err err-owner-only))
+        (asserts! (is-eq (get status refund-req) "pending") (err err-no-refund-request))
+        (unwrap! (stx-transfer? (get amount refund-req) contract-owner user)
+                (err err-payment-failed))
+        (map-set refund-requests
+            { user: user }
+            (merge refund-req { status: "approved" })
+        )
+        (ok true)))
+
+;; Admin: set refund window duration in blocks
+(define-public (set-refund-window (blocks uint))
+    (begin
+        (asserts! (is-eq tx-sender contract-owner) (err err-owner-only))
+        (asserts! (> blocks u0) (err err-invalid-plan))
+        (var-set refund-window blocks)
+        (ok true)))
+
 ;; Owner can update grace period duration
 (define-public (set-grace-period (blocks uint))
     (begin
@@ -263,6 +319,12 @@
                 u0),
             current-discount: (get discount-rate subscription)
         }))
+
+(define-read-only (get-refund-request (user principal))
+    (map-get? refund-requests { user: user }))
+
+(define-read-only (get-refund-window)
+    (var-get refund-window))
 
 (define-read-only (is-promotion-valid (promo-id uint))
     (match (map-get? promotional-rates { promo-id: promo-id })
