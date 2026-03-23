@@ -134,10 +134,11 @@
          (promo (map-get? promotional-rates { promo-id: promo-id })))
         (let
             ((payment-id (+ (var-get payment-counter) u1))
-             (discount-rate (if (and 
-                                (is-some promo)
-                                (< stacks-block-height (get valid-until (unwrap-panic promo))))
-                            (get discount-percentage (unwrap-panic promo))
+             (discount-rate (match promo
+                            promo-val
+                            (if (< stacks-block-height (get valid-until promo-val))
+                                (get discount-percentage promo-val)
+                                u0)
                             u0)))
             (begin
                 (unwrap! (process-subscription-payment (get price plan-details) tx-sender)
