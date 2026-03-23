@@ -693,3 +693,14 @@
       (var-set strprc-cnt id) (ok id))))
 (define-read-only (get-strprc-entry (id uint))
   (map-get? strprc-log id))
+
+;; btexec tracking
+(define-map btexec-log uint { v: uint, at: uint })
+(define-data-var btexec-cnt uint u0)
+(define-public (log-btexec (val uint))
+  (begin (asserts! (> val u0) (err u5300))
+    (let ((id (+ (var-get btexec-cnt) u1)))
+      (map-set btexec-log id { v: val, at: stacks-block-height })
+      (var-set btexec-cnt id) (ok id))))
+(define-read-only (get-btexec-entry (id uint))
+  (map-get? btexec-log id))
