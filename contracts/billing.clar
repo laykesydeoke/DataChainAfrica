@@ -320,6 +320,12 @@
             current-discount: (get discount-rate subscription)
         }))
 
+(define-read-only (get-refund-request (user principal))
+    (map-get? refund-requests { user: user }))
+
+(define-read-only (get-refund-window)
+    (var-get refund-window))
+
 (define-read-only (is-promotion-valid (promo-id uint))
     (match (map-get? promotional-rates { promo-id: promo-id })
         promo (> (get valid-until promo) stacks-block-height)
