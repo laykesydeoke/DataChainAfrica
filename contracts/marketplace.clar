@@ -109,7 +109,7 @@
 
 (define-public (cancel-listing (listing-id uint))
     (let ((listing (unwrap! (map-get? data-listings { listing-id: listing-id })
-                           (err err-invalid-listing))))
+                           (err err-listing-not-found))))
         (asserts! (is-eq (get seller listing) tx-sender) (err err-not-seller))
         (asserts! (get is-active listing) (err err-listing-expired))
         (begin
