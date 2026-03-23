@@ -20,6 +20,13 @@ describe("marketplace contract", () => {
       [Cl.uint(1), Cl.bool(false)],
       wallet1
     );
+    // Authorize marketplace contract to transfer data
+    simnet.callPublicFn(
+      "data-tracking",
+      "authorize-marketplace",
+      [Cl.contractPrincipal(deployer, "marketplace")],
+      deployer
+    );
   }
 
   it("allows user to create a listing", () => {
@@ -176,5 +183,117 @@ describe("marketplace contract", () => {
       wallet1
     );
     expect(result.result).toBeBool(false);
+  });
+
+  it("transfers data balance from seller to buyer on purchase", () => {
+    setupUserWithData();
+
+    // Check seller balance before
+    const sellerBefore = simnet.callPublicFn(
+      "data-tracking",
+      "get-usage",
+      [Cl.principal(wallet1)],
+      wallet1
+    );
+
+    // Create listing for 100 MB
+    simnet.callPublicFn(
+      "marketplace",
+      "create-listing",
+      [
+        Cl.uint(100),
+        Cl.uint(5000000),
+        Cl.uint(500),
+        Cl.contractPrincipal(deployer, "data-tracking"),
+      ],
+      wallet1
+    );
+
+    // Purchase the listing
+    simnet.callPublicFn(
+      "marketplace",
+      "purchase-listing",
+      [Cl.uint(1), Cl.contractPrincipal(deployer, "data-tracking")],
+      wallet2
+    );
+
+    // Verify seller balance decreased
+    const sellerAfter = simnet.callPublicFn(
+      "data-tracking",
+      "get-usage",
+      [Cl.principal(wallet1)],
+      wallet1
+    );
+    expect(sellerAfter.result).toBeOk(
+      expect.objectContaining({ type: expect.any(Number) })
+    );
+
+    // Verify buyer received data
+    const buyerAfter = simnet.callPublicFn(
+      "data-tracking",
+      "get-usage",
+      [Cl.principal(wallet2)],
+      wallet2
+    );
+    expect(buyerAfter.result).toBeOk(
+      expect.objectContaining({ type: expect.any(Number) })
+    );
+  });
+
+  it("updates seller stats after purchase", () => {
+    setupUserWithData();
+
+    simnet.callPublicFn(
+      "marketplace",
+      "create-listing",
+      [
+        Cl.uint(100),
+        Cl.uint(5000000),
+        Cl.uint(500),
+        Cl.contractPrincipal(deployer, "data-tracking"),
+      ],
+      wallet1
+    );
+
+    simnet.callPublicFn(
+      "marketplace",
+      "purchase-listing",
+      [Cl.uint(1), Cl.contractPrincipal(deployer, "data-tracking")],
+      wallet2
+    );
+
+    const stats = simnet.callReadOnlyFn(
+      "marketplace",
+      "get-user-sales",
+      [Cl.principal(wallet1)],
+      wallet1
+    );
+    expect(stats.result).toBeSome(
+      expect.objectContaining({ type: expect.any(Number) })
+    );
+  });
+
+  it("returns user active listing count", () => {
+    setupUserWithData();
+
+    simnet.callPublicFn(
+      "marketplace",
+      "create-listing",
+      [
+        Cl.uint(50),
+        Cl.uint(2500000),
+        Cl.uint(500),
+        Cl.contractPrincipal(deployer, "data-tracking"),
+      ],
+      wallet1
+    );
+
+    const result = simnet.callReadOnlyFn(
+      "marketplace",
+      "get-user-active-listings",
+      [Cl.principal(wallet1)],
+      wallet1
+    );
+    expect(result.result).toBeUint(1);
   });
 });
