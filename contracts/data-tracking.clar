@@ -130,11 +130,20 @@
             (is-authorized (default-to { is-authorized: false } (map-get? authorized-carriers { carrier: carrier })))
             (current-data (unwrap! (map-get? user-data-usage { user: user }) (err err-invalid-data)))
             (event-id (+ (var-get event-counter) u1))
+            (last-block (default-to { block-height: u0 } (map-get? last-usage-block { user: user })))
         )
         (asserts! (get is-authorized is-authorized) (err err-invalid-caller))
         (asserts! (<= usage (get data-balance current-data)) (err err-invalid-data))
         (asserts! (< stacks-block-height (get plan-expiry current-data)) (err err-expired-plan))
-        
+        ;; Rate limit: require at least 1 block between usage recordings per user
+        (asserts! (> stacks-block-height (get block-height last-block)) (err err-rate-limited))
+
+        ;; Update last-usage-block for rate limiting
+        (map-set last-usage-block
+            { user: user }
+            { block-height: stacks-block-height }
+        )
+
         ;; Update usage data
         (map-set user-data-usage
             { user: user }
@@ -148,7 +157,7 @@
                 rollover-data: (get rollover-data current-data)
             }
         )
-        
+
         ;; Log usage event
         (var-set event-counter event-id)
         (ok (map-set usage-events
