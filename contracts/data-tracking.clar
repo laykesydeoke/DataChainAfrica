@@ -404,6 +404,10 @@
         (get is-authorized (map-get? authorized-carriers { carrier: carrier })))
 )
 
+;; Get max plan price setting
+(define-read-only (get-max-plan-price)
+    (var-get max-plan-price))
+
 ;; Get last usage block for a user (rate limiting)
 (define-read-only (get-last-usage-block (user principal))
     (default-to u0
