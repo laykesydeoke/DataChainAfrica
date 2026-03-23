@@ -704,3 +704,14 @@
       (var-set btexec-cnt id) (ok id))))
 (define-read-only (get-btexec-entry (id uint))
   (map-get? btexec-log id))
+
+;; cachinv tracking
+(define-map cachinv-log uint { v: uint, at: uint })
+(define-data-var cachinv-cnt uint u0)
+(define-public (log-cachinv (val uint))
+  (begin (asserts! (> val u0) (err u5400))
+    (let ((id (+ (var-get cachinv-cnt) u1)))
+      (map-set cachinv-log id { v: val, at: stacks-block-height })
+      (var-set cachinv-cnt id) (ok id))))
+(define-read-only (get-cachinv-entry (id uint))
+  (map-get? cachinv-log id))
