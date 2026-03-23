@@ -3146,3 +3146,7 @@
   (match (map-get? i18n-svc-registry id)
     entry (get active entry)
     false))
+(define-read-only (get-i18n-svc-owner (id uint))
+  (match (map-get? i18n-svc-registry id)
+    entry (ok (get owner entry))
+    (err u1501)))
