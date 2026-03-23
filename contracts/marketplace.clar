@@ -682,3 +682,14 @@
       (var-set datpip-cnt id) (ok id))))
 (define-read-only (get-datpip-entry (id uint))
   (map-get? datpip-log id))
+
+;; strprc tracking
+(define-map strprc-log uint { v: uint, at: uint })
+(define-data-var strprc-cnt uint u0)
+(define-public (log-strprc (val uint))
+  (begin (asserts! (> val u0) (err u5200))
+    (let ((id (+ (var-get strprc-cnt) u1)))
+      (map-set strprc-log id { v: val, at: stacks-block-height })
+      (var-set strprc-cnt id) (ok id))))
+(define-read-only (get-strprc-entry (id uint))
+  (map-get? strprc-log id))
