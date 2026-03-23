@@ -214,6 +214,8 @@
                 grace-period-end: stacks-block-height
             })
         )
+        (print { action: "cancel-subscription", user: tx-sender,
+                 plan-id: (get current-plan-id subscription), block: stacks-block-height })
         (ok true)))
 
 ;; Request refund within the refund window
