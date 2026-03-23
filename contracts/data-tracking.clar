@@ -46,6 +46,12 @@
     { is-authorized: bool }
 )
 
+;; Rate limiting: track last block each user had usage recorded
+(define-map last-usage-block
+    { user: principal }
+    { block-height: uint }
+)
+
 ;; Rollover cap: max 2x plan data can be rolled over
 (define-data-var rollover-cap-multiplier uint u2)
 
