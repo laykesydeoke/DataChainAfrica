@@ -349,6 +349,47 @@ function parseClarityUint(hex) {
 }
 
 function parseClarityValue(val) {
-    if (typeof val === 'object') return val;
+    // Handle already-parsed objects
+    if (typeof val === 'object' && val !== null) {
+        // Clarity response object with type tag
+        if (val.type !== undefined) {
+            return parseClarityTyped(val);
+        }
+        return val;
+    }
+    // Handle hex-encoded Clarity values
+    if (typeof val === 'string' && val.startsWith('0x')) {
+        return parseClarityHex(val.slice(2));
+    }
+    return {};
+}
+
+function parseClarityTyped(val) {
+    // type 1 = uint, type 3 = bool, type 12 = tuple, type 9 = optional some
+    if (val.type === 1) return val.value ? parseInt(val.value, 10) : 0;
+    if (val.type === 3) return val.value === true || val.value === 'true';
+    if (val.type === 12 && val.data) {
+        var result = {};
+        var keys = Object.keys(val.data);
+        for (var i = 0; i < keys.length; i++) {
+            result[keys[i]] = parseClarityTyped(val.data[keys[i]]);
+        }
+        return result;
+    }
+    if (val.type === 9 && val.value) return parseClarityTyped(val.value);
+    return val.value !== undefined ? val.value : val;
+}
+
+function parseClarityHex(hex) {
+    if (!hex || hex.length < 2) return {};
+    var typeTag = parseInt(hex.slice(0, 2), 16);
+    var data = hex.slice(2);
+    // 0x01 = uint (16 bytes big-endian)
+    if (typeTag === 0x01) return parseInt(data, 16);
+    // 0x03 = true, 0x04 = false
+    if (typeTag === 0x03) return true;
+    if (typeTag === 0x04) return false;
+    // 0x0c = tuple
+    if (typeTag === 0x0c) return {};
     return {};
 }
