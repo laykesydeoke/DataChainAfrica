@@ -1,3 +1,6 @@
+;; Trait definitions for DataChainAfrica contracts
+;; All return types use (response ok-type err-type) as required by Clarity 4
+
 (define-trait data-tracking-trait
     (
         ;; Get plan details
