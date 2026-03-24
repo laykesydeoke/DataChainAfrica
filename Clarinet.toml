@@ -10,6 +10,11 @@ path = 'contracts/billing.clar'
 clarity_version = 4
 epoch = 'latest'
 
+[contracts.governance]
+path = 'contracts/governance.clar'
+clarity_version = 4
+epoch = 'latest'
+
 [contracts.data-tracking]
 path = 'contracts/data-tracking.clar'
 clarity_version = 4
@@ -28,7 +33,7 @@ epoch = 'latest'
 [repl.analysis]
 passes = ['check_checker']
 
-;; strict = true enforces zero unchecked data warnings - all 33 warnings resolved
+# strict = true enforces zero unchecked data warnings - all 33 warnings resolved
 [repl.analysis.check_checker]
 strict = true
 trusted_sender = false
