@@ -126,13 +126,13 @@
 ;; Public Functions
 (define-public (set-promotional-rate (promo-id uint) (discount uint) (valid-blocks uint) (min-months uint))
     (begin
-        (asserts! (is-eq tx-sender contract-owner) (err err-owner-only))
+        (asserts! (is-eq tx-sender contract-owner) err-owner-only)
         ;; Validate promo-id before using as map key
-        (asserts! (> promo-id u0) (err err-invalid-discount))
-        (asserts! (<= discount u100) (err err-invalid-discount))
+        (asserts! (> promo-id u0) err-invalid-discount)
+        (asserts! (<= discount u100) err-invalid-discount)
         ;; Validate valid-blocks and min-months before using in map values
-        (asserts! (> valid-blocks u0) (err err-invalid-discount))
-        (asserts! (> min-months u0) (err err-invalid-discount))
+        (asserts! (> valid-blocks u0) err-invalid-discount)
+        (asserts! (> min-months u0) err-invalid-discount)
         (ok (map-set promotional-rates
             { promo-id: promo-id }
             {
@@ -149,11 +149,11 @@
     ;; get-plan-details returns (response {...} uint) - unwrap! extracts the ok value
     ;; Validate plan-id and tracking-contract before use
     (let
-        ((valid-plan (asserts! (> plan-id u0) (err err-invalid-plan)))
+        ((valid-plan (asserts! (> plan-id u0) err-invalid-plan))
          (valid-contract (asserts! (is-eq (contract-of tracking-contract) .data-tracking)
-                                  (err err-invalid-plan)))
+                                  err-invalid-plan))
          (plan-details (unwrap! (contract-call? tracking-contract get-plan-details plan-id)
-                               (err err-invalid-plan)))
+                               err-invalid-plan))
          (promo (map-get? promotional-rates { promo-id: promo-id })))
         (let
             ((payment-id (+ (var-get payment-counter) u1))
@@ -165,7 +165,7 @@
                             u0)))
             (begin
                 (unwrap! (process-subscription-payment (get price plan-details) tx-sender)
-                        (err err-payment-failed))
+                        err-payment-failed)
                 (record-subscription
                     tx-sender
                     plan-id
@@ -174,7 +174,7 @@
                     discount-rate)
                 (var-set payment-counter payment-id)
                 (unwrap! (contract-call? tracking-contract subscribe-to-plan plan-id true)
-                        (err err-invalid-plan))
+                        err-invalid-plan)
                 (print { action: "process-subscription-payment", user: tx-sender,
                          plan-id: plan-id, amount: (get price plan-details),
                          discount: discount-rate, block: stacks-block-height })
@@ -185,13 +185,13 @@
         ((user tx-sender)
          ;; Validate tracking-contract is the known data-tracking contract
          (valid-contract (asserts! (is-eq (contract-of tracking-contract) .data-tracking)
-                                  (err err-invalid-plan)))
+                                  err-invalid-plan))
          (subscription (unwrap! (map-get? user-subscriptions { user: tx-sender })
-                               (err err-no-subscription))))
+                               err-no-subscription)))
         (let
             ((plan-details (unwrap! (contract-call? tracking-contract get-plan-details
                                    (get current-plan-id subscription))
-                                   (err err-invalid-plan))))
+                                   err-invalid-plan)))
             (let
                 ((payment-id (+ (var-get payment-counter) u1)))
                 (begin
@@ -199,9 +199,9 @@
                     ;; No need to check payment-status - the grace period window
                     ;; is the authoritative check for renewal eligibility
                     (asserts! (<= stacks-block-height (get grace-period-end subscription))
-                             (err err-grace-period-expired))
+                             err-grace-period-expired)
                     (unwrap! (process-subscription-payment (get price plan-details) user)
-                            (err err-payment-failed))
+                            err-payment-failed)
                     (record-subscription
                         user
                         (get current-plan-id subscription)
@@ -218,7 +218,7 @@
 (define-public (cancel-subscription)
     (let
         ((subscription (unwrap! (map-get? user-subscriptions { user: tx-sender })
-                               (err err-no-subscription))))
+                               err-no-subscription)))
         (map-set user-subscriptions
             { user: tx-sender }
             (merge subscription {
@@ -234,11 +234,11 @@
 (define-public (request-refund)
     (let
         ((subscription (unwrap! (map-get? user-subscriptions { user: tx-sender })
-                               (err err-no-subscription)))
+                               err-no-subscription))
          (window-end (+ (get subscription-start subscription) (var-get refund-window))))
-        (asserts! (<= stacks-block-height window-end) (err err-refund-window-expired))
+        (asserts! (<= stacks-block-height window-end) err-refund-window-expired)
         (asserts! (is-none (map-get? refund-requests { user: tx-sender }))
-                 (err err-refund-already-requested))
+                 err-refund-already-requested)
         (map-set refund-requests
             { user: tx-sender }
             {
@@ -253,13 +253,13 @@
 (define-public (process-refund (user principal))
     (let
         ;; Validate user principal input before using as map key
-        ((valid-user (asserts! (is-standard user) (err err-no-refund-request)))
+        ((valid-user (asserts! (is-standard user) err-no-refund-request))
          (refund-req (unwrap! (map-get? refund-requests { user: user })
-                             (err err-no-refund-request))))
-        (asserts! (is-eq tx-sender contract-owner) (err err-owner-only))
-        (asserts! (is-eq (get status refund-req) "pending") (err err-no-refund-request))
+                             err-no-refund-request)))
+        (asserts! (is-eq tx-sender contract-owner) err-owner-only)
+        (asserts! (is-eq (get status refund-req) "pending") err-no-refund-request)
         (unwrap! (stx-transfer? (get amount refund-req) contract-owner user)
-                (err err-payment-failed))
+                err-payment-failed)
         (map-set refund-requests
             { user: user }
             (merge refund-req { status: "approved" })
@@ -269,16 +269,16 @@
 ;; Admin: set refund window duration in blocks
 (define-public (set-refund-window (blocks uint))
     (begin
-        (asserts! (is-eq tx-sender contract-owner) (err err-owner-only))
-        (asserts! (> blocks u0) (err err-invalid-plan))
+        (asserts! (is-eq tx-sender contract-owner) err-owner-only)
+        (asserts! (> blocks u0) err-invalid-plan)
         (var-set refund-window blocks)
         (ok true)))
 
 ;; Owner can update grace period duration
 (define-public (set-grace-period (blocks uint))
     (begin
-        (asserts! (is-eq tx-sender contract-owner) (err err-owner-only))
-        (asserts! (> blocks u0) (err err-invalid-plan))
+        (asserts! (is-eq tx-sender contract-owner) err-owner-only)
+        (asserts! (> blocks u0) err-invalid-plan)
         (var-set grace-period-blocks blocks)
         (ok true)))
 

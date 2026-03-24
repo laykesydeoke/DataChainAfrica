@@ -71,11 +71,11 @@
          (seller-amount (- amount fee)))
         ;; Pay seller
         (unwrap! (stx-transfer? seller-amount sender recipient)
-                (err err-insufficient-funds))
+                err-insufficient-funds)
         ;; Collect fee for platform
         (if (> fee u0)
             (unwrap! (stx-transfer? fee sender contract-owner)
-                    (err err-insufficient-funds))
+                    err-insufficient-funds)
             true)
         (var-set total-fees-collected (+ (var-get total-fees-collected) fee))
         (ok true)
@@ -85,7 +85,7 @@
 (define-private (process-payment (amount uint) (sender principal) (recipient principal))
     (match (stx-transfer? amount sender recipient)
         success (ok true)
-        error (err err-insufficient-funds)))
+        error err-insufficient-funds))
 
 ;; Public Functions
 (define-public (create-listing
@@ -96,15 +96,15 @@
     (let
         ((listing-id (+ (var-get listing-counter) u1))
          ;; Validate price and blocks-active inputs before using in map values
-         (valid-price (asserts! (> price u0) (err err-invalid-listing)))
-         (valid-duration (asserts! (> blocks-active u0) (err err-invalid-listing)))
+         (valid-price (asserts! (> price u0) err-invalid-listing))
+         (valid-duration (asserts! (> blocks-active u0) err-invalid-listing))
          ;; Validate tracking-contract is the known data-tracking contract
          (valid-contract (asserts! (is-eq (contract-of tracking-contract) .data-tracking)
-                                  (err err-invalid-listing)))
+                                  err-invalid-listing))
          (user-data (unwrap! (contract-call? tracking-contract get-usage tx-sender)
-                            (err err-insufficient-data))))
+                            err-insufficient-data)))
         (asserts! (>= (get data-balance user-data) data-amount)
-                 (err err-insufficient-data))
+                 err-insufficient-data)
         (begin
             (var-set listing-counter listing-id)
             (map-set data-listings
@@ -135,11 +135,11 @@
 
 (define-public (cancel-listing (listing-id uint))
     (let (;; Validate listing-id before using as map key
-          (valid-id (asserts! (> listing-id u0) (err err-listing-not-found)))
+          (valid-id (asserts! (> listing-id u0) err-listing-not-found))
           (listing (unwrap! (map-get? data-listings { listing-id: listing-id })
-                           (err err-listing-not-found))))
-        (asserts! (is-eq (get seller listing) tx-sender) (err err-not-seller))
-        (asserts! (get is-active listing) (err err-listing-expired))
+                           err-listing-not-found)))
+        (asserts! (is-eq (get seller listing) tx-sender) err-not-seller)
+        (asserts! (get is-active listing) err-listing-expired)
         (begin
             (map-set data-listings
                 { listing-id: listing-id }
@@ -152,7 +152,7 @@
                 }
             )
             (let ((current-sales (unwrap! (map-get? user-sales { user: tx-sender })
-                                        (err err-not-seller))))
+                                        err-not-seller)))
                 (map-set user-sales
                     { user: tx-sender }
                     {
@@ -172,17 +172,17 @@
     (tracking-contract <data-tracking-trait>))
     (let
         (;; Validate listing-id before using as map key
-         (valid-id (asserts! (> listing-id u0) (err err-listing-not-found)))
+         (valid-id (asserts! (> listing-id u0) err-listing-not-found))
          (listing (unwrap! (map-get? data-listings { listing-id: listing-id })
-                          (err err-listing-not-found))))
+                          err-listing-not-found)))
         (begin
-            (asserts! (get is-active listing) (err err-listing-expired))
-            (asserts! (<= stacks-block-height (get expiry listing)) (err err-listing-expired))
-            (asserts! (not (is-eq tx-sender (get seller listing))) (err err-self-purchase))
+            (asserts! (get is-active listing) err-listing-expired)
+            (asserts! (<= stacks-block-height (get expiry listing)) err-listing-expired)
+            (asserts! (not (is-eq tx-sender (get seller listing))) err-self-purchase)
             
             ;; Process payment with marketplace fee
             (unwrap! (process-payment-with-fee (get price listing) tx-sender (get seller listing))
-                    (err err-insufficient-funds))
+                    err-insufficient-funds)
             
             ;; Update listing status
             (map-set data-listings
@@ -199,11 +199,11 @@
             ;; Transfer data from seller to buyer
             (unwrap! (contract-call? .data-tracking transfer-data-balance
                 (get seller listing) tx-sender (get data-amount listing))
-                (err err-insufficient-data))
+                err-insufficient-data)
 
             ;; Update seller stats
             (let ((seller-stats (unwrap! (map-get? user-sales { user: (get seller listing) })
-                                       (err err-not-seller))))
+                                       err-not-seller)))
                 (map-set user-sales
                     { user: (get seller listing) }
                     {
@@ -250,11 +250,11 @@
 (define-public (rate-seller (listing-id uint) (rating uint))
     (let
         ((listing (unwrap! (map-get? data-listings { listing-id: listing-id })
-                          (err err-listing-not-found)))
+                          err-listing-not-found))
          (purchase-rec (map-get? purchase-records { buyer: tx-sender, listing-id: listing-id })))
-        (asserts! (>= rating u1) (err err-invalid-rating))
-        (asserts! (<= rating u5) (err err-invalid-rating))
-        (asserts! (is-some purchase-rec) (err err-not-buyer))
+        (asserts! (>= rating u1) err-invalid-rating)
+        (asserts! (<= rating u5) err-invalid-rating)
+        (asserts! (is-some purchase-rec) err-not-buyer)
         (let ((seller-rep (default-to
                 { total-sales: u0, total-purchases: u0, rating-sum: u0, rating-count: u0 }
                 (map-get? user-reputation { user: (get seller listing) }))))
@@ -311,7 +311,7 @@
 ;; Admin: update marketplace fee rate (basis points)
 (define-public (set-marketplace-fee-rate (new-rate uint))
     (begin
-        (asserts! (is-eq tx-sender contract-owner) (err err-owner-only))
-        (asserts! (<= new-rate u1000) (err err-invalid-listing)) ;; max 10%
+        (asserts! (is-eq tx-sender contract-owner) err-owner-only)
+        (asserts! (<= new-rate u1000) err-invalid-listing) ;; max 10%
         (var-set marketplace-fee-rate new-rate)
         (ok true)))

@@ -86,8 +86,8 @@
 ;; Allow owner to authorize a principal to create proposals
 (define-public (authorize-proposer (proposer principal))
     (begin
-        (asserts! (is-eq tx-sender contract-owner) (err err-owner-only))
-        (asserts! (is-standard proposer) (err err-invalid-input))
+        (asserts! (is-eq tx-sender contract-owner) err-owner-only)
+        (asserts! (is-standard proposer) err-invalid-input)
         (ok (map-set authorized-proposers
             { proposer: proposer }
             { is-authorized: true }
@@ -98,8 +98,8 @@
 ;; Allow owner to revoke a proposer's authorization
 (define-public (revoke-proposer (proposer principal))
     (begin
-        (asserts! (is-eq tx-sender contract-owner) (err err-owner-only))
-        (asserts! (is-standard proposer) (err err-invalid-input))
+        (asserts! (is-eq tx-sender contract-owner) err-owner-only)
+        (asserts! (is-standard proposer) err-invalid-input)
         (ok (map-set authorized-proposers
             { proposer: proposer }
             { is-authorized: false }
@@ -110,8 +110,8 @@
 ;; Allow owner to update the default voting period
 (define-public (set-voting-period (blocks uint))
     (begin
-        (asserts! (is-eq tx-sender contract-owner) (err err-owner-only))
-        (asserts! (> blocks u0) (err err-invalid-input))
+        (asserts! (is-eq tx-sender contract-owner) err-owner-only)
+        (asserts! (> blocks u0) err-invalid-input)
         (var-set default-voting-period blocks)
         (ok true)
     )
@@ -120,8 +120,8 @@
 ;; Set minimum quorum for proposals to pass
 (define-public (set-min-quorum (quorum uint))
     (begin
-        (asserts! (is-eq tx-sender contract-owner) (err err-owner-only))
-        (asserts! (> quorum u0) (err err-invalid-input))
+        (asserts! (is-eq tx-sender contract-owner) err-owner-only)
+        (asserts! (> quorum u0) err-invalid-input)
         (var-set min-quorum quorum)
         (print { action: "set-min-quorum", quorum: quorum })
         (ok true)
@@ -131,8 +131,8 @@
 ;; Set execution delay (timelock period) in blocks
 (define-public (set-execution-delay (blocks uint))
     (begin
-        (asserts! (is-eq tx-sender contract-owner) (err err-owner-only))
-        (asserts! (> blocks u0) (err err-invalid-input))
+        (asserts! (is-eq tx-sender contract-owner) err-owner-only)
+        (asserts! (> blocks u0) err-invalid-input)
         (var-set execution-delay blocks)
         (print { action: "set-execution-delay", blocks: blocks })
         (ok true)
@@ -146,11 +146,11 @@
 ;; Delegate your voting power to another address
 (define-public (delegate-vote (delegate principal))
     (begin
-        (asserts! (is-standard delegate) (err err-invalid-input))
-        (asserts! (not (is-eq tx-sender delegate)) (err err-self-delegation))
+        (asserts! (is-standard delegate) err-invalid-input)
+        (asserts! (not (is-eq tx-sender delegate)) err-self-delegation)
         ;; Prevent circular delegation: delegate must not have delegated to someone else
         (asserts! (is-none (map-get? vote-delegates { delegator: delegate }))
-                 (err err-already-delegated))
+                 err-already-delegated)
         (map-set vote-delegates
             { delegator: tx-sender }
             { delegate: delegate }
@@ -164,7 +164,7 @@
 (define-public (revoke-delegation)
     (begin
         (asserts! (is-some (map-get? vote-delegates { delegator: tx-sender }))
-                 (err err-invalid-input))
+                 err-invalid-input)
         (map-delete vote-delegates { delegator: tx-sender })
         (print { action: "revoke-delegation", delegator: tx-sender })
         (ok true)
@@ -180,18 +180,18 @@
 (define-public (vote-on-proposal (proposal-id uint) (vote bool))
     (let
         ;; Validate proposal-id input
-        ((valid-id (asserts! (> proposal-id u0) (err err-invalid-input)))
+        ((valid-id (asserts! (> proposal-id u0) err-invalid-input))
          (proposal (unwrap! (map-get? proposals { id: proposal-id })
-                           (err err-proposal-not-found)))
+                           err-proposal-not-found))
          ;; Vote weight: base 1 for the voter themselves
          (vote-weight u1))
         ;; Check proposal is still active
-        (asserts! (is-eq (get status proposal) status-active) (err err-voting-closed))
+        (asserts! (is-eq (get status proposal) status-active) err-voting-closed)
         ;; Check voting period has not ended
-        (asserts! (< stacks-block-height (get ends-at proposal)) (err err-voting-closed))
+        (asserts! (< stacks-block-height (get ends-at proposal)) err-voting-closed)
         ;; Check voter has not already voted on this proposal
         (asserts! (is-none (map-get? voter-record { proposal-id: proposal-id, voter: tx-sender }))
-                 (err err-already-voted))
+                 err-already-voted)
 
         ;; Record the vote
         (map-set voter-record
@@ -216,20 +216,20 @@
 ;; Vote on behalf of a delegator (delegate casts their delegator's vote)
 (define-public (vote-as-delegate (proposal-id uint) (delegator principal) (vote bool))
     (let
-        ((valid-id (asserts! (> proposal-id u0) (err err-invalid-input)))
-         (valid-delegator (asserts! (is-standard delegator) (err err-invalid-input)))
+        ((valid-id (asserts! (> proposal-id u0) err-invalid-input))
+         (valid-delegator (asserts! (is-standard delegator) err-invalid-input))
          (proposal (unwrap! (map-get? proposals { id: proposal-id })
-                           (err err-proposal-not-found)))
+                           err-proposal-not-found))
          (delegation (unwrap! (map-get? vote-delegates { delegator: delegator })
-                             (err err-invalid-input))))
+                             err-invalid-input)))
         ;; Verify the caller is the actual delegate
-        (asserts! (is-eq tx-sender (get delegate delegation)) (err err-invalid-input))
+        (asserts! (is-eq tx-sender (get delegate delegation)) err-invalid-input)
         ;; Check proposal is still active
-        (asserts! (is-eq (get status proposal) status-active) (err err-voting-closed))
-        (asserts! (< stacks-block-height (get ends-at proposal)) (err err-voting-closed))
+        (asserts! (is-eq (get status proposal) status-active) err-voting-closed)
+        (asserts! (< stacks-block-height (get ends-at proposal)) err-voting-closed)
         ;; Check delegator hasn't already voted directly
         (asserts! (is-none (map-get? voter-record { proposal-id: proposal-id, voter: delegator }))
-                 (err err-already-voted))
+                 err-already-voted)
 
         ;; Record the vote under the delegator's name
         (map-set voter-record
@@ -260,16 +260,16 @@
 (define-public (close-proposal (proposal-id uint))
     (let
         ;; Validate proposal-id input
-        ((valid-id (asserts! (> proposal-id u0) (err err-invalid-input)))
+        ((valid-id (asserts! (> proposal-id u0) err-invalid-input))
          (proposal (unwrap! (map-get? proposals { id: proposal-id })
-                           (err err-proposal-not-found)))
+                           err-proposal-not-found))
          (total-votes (+ (get votes-for proposal) (get votes-against proposal))))
         ;; Only owner can close proposals
-        (asserts! (is-eq tx-sender contract-owner) (err err-owner-only))
+        (asserts! (is-eq tx-sender contract-owner) err-owner-only)
         ;; Proposal must be active
-        (asserts! (is-eq (get status proposal) status-active) (err err-already-closed))
+        (asserts! (is-eq (get status proposal) status-active) err-already-closed)
         ;; Voting period must have ended
-        (asserts! (>= stacks-block-height (get ends-at proposal)) (err err-voting-not-ended))
+        (asserts! (>= stacks-block-height (get ends-at proposal)) err-voting-not-ended)
 
         ;; Determine outcome: passed only if quorum met AND votes-for > votes-against
         (let ((outcome (if (and
@@ -295,19 +295,19 @@
 ;; Execute a passed proposal after the execution delay period
 (define-public (execute-proposal (proposal-id uint))
     (let
-        ((valid-id (asserts! (> proposal-id u0) (err err-invalid-input)))
+        ((valid-id (asserts! (> proposal-id u0) err-invalid-input))
          (proposal (unwrap! (map-get? proposals { id: proposal-id })
-                           (err err-proposal-not-found)))
+                           err-proposal-not-found))
          (existing-exec (map-get? proposal-execution { id: proposal-id })))
         ;; Only owner can execute
-        (asserts! (is-eq tx-sender contract-owner) (err err-owner-only))
+        (asserts! (is-eq tx-sender contract-owner) err-owner-only)
         ;; Must be a passed proposal
-        (asserts! (is-eq (get status proposal) status-passed) (err err-not-executed))
+        (asserts! (is-eq (get status proposal) status-passed) err-not-executed)
         ;; Must not be already executed
-        (asserts! (is-none existing-exec) (err err-already-executed))
+        (asserts! (is-none existing-exec) err-already-executed)
         ;; Execution delay must have elapsed since voting ended
         (asserts! (>= stacks-block-height (+ (get ends-at proposal) (var-get execution-delay)))
-                 (err err-execution-delay))
+                 err-execution-delay)
 
         (map-set proposal-execution
             { id: proposal-id }
@@ -329,9 +329,9 @@
         ((proposal-id (+ (var-get proposal-counter) u1))
          (auth (default-to { is-authorized: false }
                 (map-get? authorized-proposers { proposer: tx-sender }))))
-        (asserts! (get is-authorized auth) (err err-not-active))
-        (asserts! (> (len title) u0) (err err-invalid-proposal))
-        (asserts! (> (len description) u0) (err err-invalid-proposal))
+        (asserts! (get is-authorized auth) err-not-active)
+        (asserts! (> (len title) u0) err-invalid-proposal)
+        (asserts! (> (len description) u0) err-invalid-proposal)
         (var-set proposal-counter proposal-id)
         (ok (map-set proposals
             { id: proposal-id }
@@ -366,7 +366,7 @@
             votes-against: (get votes-against proposal),
             total: (+ (get votes-for proposal) (get votes-against proposal))
         })
-        (err err-proposal-not-found)
+        err-proposal-not-found
     )
 )
 
