@@ -110,6 +110,9 @@ document.addEventListener('DOMContentLoaded', function () {
     // Show network indicator on page load
     updateNetworkIndicator();
 
+    // Check Hiro API connectivity
+    checkApiStatus();
+
     checkExistingSession();
 });
 
@@ -121,6 +124,28 @@ function updateNetworkIndicator() {
     if (!indicator) return;
     indicator.textContent = CONFIG.network === 'mainnet' ? 'Mainnet' : 'Testnet';
     indicator.className = 'network-indicator ' + CONFIG.network;
+}
+
+// ============================================================
+// API Status Check
+// ============================================================
+function checkApiStatus() {
+    var statusEl = document.getElementById('apiStatus');
+    if (!statusEl) return;
+    fetch(CONFIG.apiBase + '/extended/v1/info', { headers: { 'Accept': 'application/json' } })
+        .then(function (r) {
+            if (r.ok) {
+                statusEl.textContent = 'Live';
+                statusEl.style.color = 'var(--green)';
+            } else {
+                statusEl.textContent = 'Down';
+                statusEl.style.color = '#dc3545';
+            }
+        })
+        .catch(function () {
+            statusEl.textContent = 'Offline';
+            statusEl.style.color = '#dc3545';
+        });
 }
 
 // ============================================================
