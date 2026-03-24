@@ -88,13 +88,19 @@
         error (err err-insufficient-funds)))
 
 ;; Public Functions
-(define-public (create-listing 
-    (data-amount uint) 
-    (price uint) 
+(define-public (create-listing
+    (data-amount uint)
+    (price uint)
     (blocks-active uint)
     (tracking-contract <data-tracking-trait>))
     (let
         ((listing-id (+ (var-get listing-counter) u1))
+         ;; Validate price and blocks-active inputs before using in map values
+         (valid-price (asserts! (> price u0) (err err-invalid-listing)))
+         (valid-duration (asserts! (> blocks-active u0) (err err-invalid-listing)))
+         ;; Validate tracking-contract is the known data-tracking contract
+         (valid-contract (asserts! (is-eq (contract-of tracking-contract) .data-tracking)
+                                  (err err-invalid-listing)))
          (user-data (unwrap! (contract-call? tracking-contract get-usage tx-sender)
                             (err err-insufficient-data))))
         (asserts! (>= (get data-balance user-data) data-amount)
@@ -128,7 +134,9 @@
             (ok listing-id))))
 
 (define-public (cancel-listing (listing-id uint))
-    (let ((listing (unwrap! (map-get? data-listings { listing-id: listing-id })
+    (let (;; Validate listing-id before using as map key
+          (valid-id (asserts! (> listing-id u0) (err err-listing-not-found)))
+          (listing (unwrap! (map-get? data-listings { listing-id: listing-id })
                            (err err-listing-not-found))))
         (asserts! (is-eq (get seller listing) tx-sender) (err err-not-seller))
         (asserts! (get is-active listing) (err err-listing-expired))
@@ -159,11 +167,13 @@
                      listing-id: listing-id, block: stacks-block-height })
             (ok true))))
 
-(define-public (purchase-listing 
-    (listing-id uint) 
+(define-public (purchase-listing
+    (listing-id uint)
     (tracking-contract <data-tracking-trait>))
     (let
-        ((listing (unwrap! (map-get? data-listings { listing-id: listing-id })
+        (;; Validate listing-id before using as map key
+         (valid-id (asserts! (> listing-id u0) (err err-listing-not-found)))
+         (listing (unwrap! (map-get? data-listings { listing-id: listing-id })
                           (err err-listing-not-found))))
         (begin
             (asserts! (get is-active listing) (err err-listing-expired))

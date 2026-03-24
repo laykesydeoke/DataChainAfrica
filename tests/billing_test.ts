@@ -37,6 +37,17 @@ describe("billing contract", () => {
     expect(result).toBeErr(Cl.uint(206));
   });
 
+  it("rejects promo-id of zero in set-promotional-rate", () => {
+    // After strict checks fix, promo-id must be > 0
+    const { result } = simnet.callPublicFn(
+      "billing",
+      "set-promotional-rate",
+      [Cl.uint(0), Cl.uint(20), Cl.uint(1000), Cl.uint(3)],
+      deployer
+    );
+    expect(result).toBeErr(Cl.uint(206));
+  });
+
   it("subscribes and pays with tracking contract", () => {
     // First set up a plan in data-tracking
     simnet.callPublicFn(

@@ -27,6 +27,27 @@ describe("data-tracking contract", () => {
     expect(result).toBeErr(Cl.uint(100));
   });
 
+  it("rejects set-data-plan with plan-id of zero after strict checks", () => {
+    // plan-id must be > 0 after unchecked data validation fix
+    const { result } = simnet.callPublicFn(
+      "data-tracking",
+      "set-data-plan",
+      [Cl.uint(0), Cl.uint(500), Cl.uint(144), Cl.uint(50000000)],
+      deployer
+    );
+    expect(result).toBeErr(Cl.uint(102));
+  });
+
+  it("rejects subscribe-to-plan with plan-id of zero after strict checks", () => {
+    const { result } = simnet.callPublicFn(
+      "data-tracking",
+      "subscribe-to-plan",
+      [Cl.uint(0), Cl.bool(false)],
+      wallet1
+    );
+    expect(result).toBeErr(Cl.uint(105));
+  });
+
   it("allows user to subscribe to a plan", () => {
     simnet.callPublicFn(
       "data-tracking",
