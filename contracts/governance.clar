@@ -93,6 +93,45 @@
 )
 
 ;; ============================================================
+;; Voting
+;; ============================================================
+
+;; Vote on a proposal (one vote per address per proposal, during active period)
+(define-public (vote-on-proposal (proposal-id uint) (vote bool))
+    (let
+        ;; Validate proposal-id input
+        ((valid-id (asserts! (> proposal-id u0) (err err-invalid-input)))
+         (proposal (unwrap! (map-get? proposals { id: proposal-id })
+                           (err err-proposal-not-found))))
+        ;; Check proposal is still active
+        (asserts! (is-eq (get status proposal) status-active) (err err-voting-closed))
+        ;; Check voting period has not ended
+        (asserts! (< stacks-block-height (get ends-at proposal)) (err err-voting-closed))
+        ;; Check voter has not already voted on this proposal
+        (asserts! (is-none (map-get? voter-record { proposal-id: proposal-id, voter: tx-sender }))
+                 (err err-already-voted))
+
+        ;; Record the vote
+        (map-set voter-record
+            { proposal-id: proposal-id, voter: tx-sender }
+            { vote: vote }
+        )
+
+        ;; Update vote counts on the proposal
+        (if vote
+            (ok (map-set proposals
+                { id: proposal-id }
+                (merge proposal { votes-for: (+ (get votes-for proposal) u1) })
+            ))
+            (ok (map-set proposals
+                { id: proposal-id }
+                (merge proposal { votes-against: (+ (get votes-against proposal) u1) })
+            ))
+        )
+    )
+)
+
+;; ============================================================
 ;; Proposal Creation
 ;; ============================================================
 
