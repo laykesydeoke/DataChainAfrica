@@ -16,10 +16,12 @@
 (define-constant err-self-purchase (err u307))
 (define-constant err-invalid-rating (err u308))
 (define-constant err-not-buyer (err u309))
+(define-constant err-marketplace-paused (err u310))
 
 ;; Marketplace fee: 2% of listing price goes to platform
 (define-data-var marketplace-fee-rate uint u200) ;; basis points (200 = 2%)
 (define-data-var total-fees-collected uint u0)
+(define-data-var marketplace-paused bool false)
 
 ;; Data Structures
 (define-map data-listings
@@ -95,6 +97,7 @@
     (tracking-contract <data-tracking-trait>))
     (let
         ((listing-id (+ (var-get listing-counter) u1))
+         (not-paused (asserts! (not (var-get marketplace-paused)) err-marketplace-paused))
          ;; Validate price and blocks-active inputs before using in map values
          (valid-price (asserts! (> price u0) err-invalid-listing))
          (valid-duration (asserts! (> blocks-active u0) err-invalid-listing))
@@ -172,6 +175,7 @@
     (tracking-contract <data-tracking-trait>))
     (let
         (;; Validate listing-id before using as map key
+         (not-paused (asserts! (not (var-get marketplace-paused)) err-marketplace-paused))
          (valid-id (asserts! (> listing-id u0) err-listing-not-found))
          (listing (unwrap! (map-get? data-listings { listing-id: listing-id })
                           err-listing-not-found)))
@@ -307,6 +311,18 @@
         (if (> (get rating-count rep) u0)
             (/ (get rating-sum rep) (get rating-count rep))
             u0)))
+
+;; Admin: toggle marketplace pause
+(define-public (set-marketplace-pause (paused bool))
+    (begin
+        (asserts! (is-eq tx-sender contract-owner) err-owner-only)
+        (var-set marketplace-paused paused)
+        (print { action: "marketplace-pause", paused: paused })
+        (ok true)))
+
+;; Check if marketplace is paused
+(define-read-only (is-marketplace-paused)
+    (var-get marketplace-paused))
 
 ;; Admin: update marketplace fee rate (basis points)
 (define-public (set-marketplace-fee-rate (new-rate uint))

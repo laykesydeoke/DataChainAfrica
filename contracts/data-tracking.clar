@@ -12,6 +12,14 @@
 (define-constant err-data-not-found (err u106))
 (define-constant err-rate-limited (err u107))
 (define-constant err-price-too-high (err u108))
+(define-constant err-contract-paused (err u109))
+(define-constant err-low-balance (err u110))
+
+;; Emergency pause
+(define-data-var contract-paused bool false)
+
+;; Low balance alert threshold (percentage of plan data, basis points: 1000 = 10%)
+(define-data-var low-balance-threshold uint u1000)
 
 ;; Data Plan Types
 (define-constant plan-daily u1)
@@ -79,6 +87,7 @@
 (define-public (set-data-plan (plan-id uint) (data-amount uint) (duration-blocks uint) (price uint))
     (begin
         (asserts! (is-eq tx-sender contract-owner) err-owner-only)
+        (asserts! (not (var-get contract-paused)) err-contract-paused)
         ;; Validate plan-id before using as map key
         (asserts! (> plan-id u0) err-invalid-data)
         (asserts! (> data-amount u0) err-invalid-data)
@@ -102,6 +111,7 @@
     (let
         (
             (user tx-sender)
+            (not-paused (asserts! (not (var-get contract-paused)) err-contract-paused))
             ;; Validate plan-id before using as map key
             (valid-plan-id (asserts! (> plan-id u0) err-invalid-plan))
             (plan (unwrap! (map-get? data-plans { plan-id: plan-id }) err-invalid-plan))
@@ -359,6 +369,25 @@
     )
 )
 
+;; Emergency pause toggle
+(define-public (set-emergency-pause (paused bool))
+    (begin
+        (asserts! (is-eq tx-sender contract-owner) err-owner-only)
+        (var-set contract-paused paused)
+        (print { action: "emergency-pause", paused: paused, by: tx-sender })
+        (ok true))
+)
+
+;; Set low balance alert threshold (in basis points of plan data)
+(define-public (set-low-balance-threshold (threshold uint))
+    (begin
+        (asserts! (is-eq tx-sender contract-owner) err-owner-only)
+        (asserts! (> threshold u0) err-invalid-data)
+        (asserts! (<= threshold u5000) err-invalid-data) ;; max 50%
+        (var-set low-balance-threshold threshold)
+        (ok true))
+)
+
 ;; Admin: configure the maximum allowed price for a plan
 (define-public (set-max-plan-price (new-max uint))
     (begin
@@ -437,4 +466,30 @@
 (define-read-only (get-last-usage-block (user principal))
     (default-to u0
         (get block-height (map-get? last-usage-block { user: user })))
+)
+
+;; Check if user has low data balance (below threshold)
+(define-read-only (is-low-balance (user principal))
+    (match (map-get? user-data-usage { user: user })
+        data
+        (let (
+            (plan (default-to
+                { data-amount: u0, duration-blocks: u0, price: u0, is-active: false }
+                (map-get? data-plans { plan-id: (get plan-type data) })))
+            (threshold-amount (/ (* (get data-amount plan) (var-get low-balance-threshold)) u10000))
+        )
+            (<= (get data-balance data) threshold-amount)
+        )
+        false
+    )
+)
+
+;; Check if contract is paused
+(define-read-only (is-paused)
+    (var-get contract-paused)
+)
+
+;; Get the low balance threshold setting
+(define-read-only (get-low-balance-threshold)
+    (var-get low-balance-threshold)
 )
