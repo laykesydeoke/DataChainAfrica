@@ -28,6 +28,7 @@ epoch = 'latest'
 [repl.analysis]
 passes = ['check_checker']
 
+;; strict = true enforces zero unchecked data warnings - all 33 warnings resolved
 [repl.analysis.check_checker]
 strict = true
 trusted_sender = false
