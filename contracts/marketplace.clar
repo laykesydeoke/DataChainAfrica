@@ -1,6 +1,7 @@
 ;; marketplace.clar
 
 ;; Import traits
+;; get-usage returns (response {...} uint) - compatible with unwrap! in create-listing
 (use-trait data-tracking-trait .data-traits.data-tracking-trait)
 
 ;; Constants
