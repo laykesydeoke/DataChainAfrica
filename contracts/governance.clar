@@ -117,6 +117,28 @@
     )
 )
 
+;; Set minimum quorum for proposals to pass
+(define-public (set-min-quorum (quorum uint))
+    (begin
+        (asserts! (is-eq tx-sender contract-owner) (err err-owner-only))
+        (asserts! (> quorum u0) (err err-invalid-input))
+        (var-set min-quorum quorum)
+        (print { action: "set-min-quorum", quorum: quorum })
+        (ok true)
+    )
+)
+
+;; Set execution delay (timelock period) in blocks
+(define-public (set-execution-delay (blocks uint))
+    (begin
+        (asserts! (is-eq tx-sender contract-owner) (err err-owner-only))
+        (asserts! (> blocks u0) (err err-invalid-input))
+        (var-set execution-delay blocks)
+        (print { action: "set-execution-delay", blocks: blocks })
+        (ok true)
+    )
+)
+
 ;; ============================================================
 ;; Vote Delegation
 ;; ============================================================
@@ -263,6 +285,37 @@
                 (merge proposal { status: outcome })
             ))
         )
+    )
+)
+
+;; ============================================================
+;; Proposal Execution (Timelock)
+;; ============================================================
+
+;; Execute a passed proposal after the execution delay period
+(define-public (execute-proposal (proposal-id uint))
+    (let
+        ((valid-id (asserts! (> proposal-id u0) (err err-invalid-input)))
+         (proposal (unwrap! (map-get? proposals { id: proposal-id })
+                           (err err-proposal-not-found)))
+         (existing-exec (map-get? proposal-execution { id: proposal-id })))
+        ;; Only owner can execute
+        (asserts! (is-eq tx-sender contract-owner) (err err-owner-only))
+        ;; Must be a passed proposal
+        (asserts! (is-eq (get status proposal) status-passed) (err err-not-executed))
+        ;; Must not be already executed
+        (asserts! (is-none existing-exec) (err err-already-executed))
+        ;; Execution delay must have elapsed since voting ended
+        (asserts! (>= stacks-block-height (+ (get ends-at proposal) (var-get execution-delay)))
+                 (err err-execution-delay))
+
+        (map-set proposal-execution
+            { id: proposal-id }
+            { executed: true, executed-at: stacks-block-height }
+        )
+        (print { action: "execute-proposal", proposal-id: proposal-id,
+                 executed-at: stacks-block-height })
+        (ok true)
     )
 )
 
