@@ -234,12 +234,14 @@
 ;; ============================================================
 
 ;; Owner closes a proposal after the voting period ends, determining outcome
+;; Requires minimum quorum (total votes >= min-quorum) for proposal to pass
 (define-public (close-proposal (proposal-id uint))
     (let
         ;; Validate proposal-id input
         ((valid-id (asserts! (> proposal-id u0) (err err-invalid-input)))
          (proposal (unwrap! (map-get? proposals { id: proposal-id })
-                           (err err-proposal-not-found))))
+                           (err err-proposal-not-found)))
+         (total-votes (+ (get votes-for proposal) (get votes-against proposal))))
         ;; Only owner can close proposals
         (asserts! (is-eq tx-sender contract-owner) (err err-owner-only))
         ;; Proposal must be active
@@ -247,10 +249,15 @@
         ;; Voting period must have ended
         (asserts! (>= stacks-block-height (get ends-at proposal)) (err err-voting-not-ended))
 
-        ;; Determine outcome: passed if votes-for > votes-against
-        (let ((outcome (if (> (get votes-for proposal) (get votes-against proposal))
+        ;; Determine outcome: passed only if quorum met AND votes-for > votes-against
+        (let ((outcome (if (and
+                            (>= total-votes (var-get min-quorum))
+                            (> (get votes-for proposal) (get votes-against proposal)))
                     status-passed
                     status-rejected)))
+            (print { action: "close-proposal", proposal-id: proposal-id,
+                     outcome: outcome, total-votes: total-votes,
+                     quorum-required: (var-get min-quorum) })
             (ok (map-set proposals
                 { id: proposal-id }
                 (merge proposal { status: outcome })
