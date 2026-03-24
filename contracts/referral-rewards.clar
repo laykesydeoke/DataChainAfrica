@@ -176,6 +176,7 @@
 ;; Claim referee reward (new user claims their welcome bonus)
 (define-public (claim-referee-reward)
     (let (
+        (caller tx-sender)
         (referral (unwrap! (map-get? referrals { referee: tx-sender }) err-no-referral))
         (reward (var-get referee-reward))
         (pool (var-get reward-pool))
@@ -184,19 +185,19 @@
         (asserts! (not (get referee-claimed referral)) err-reward-claimed)
         (asserts! (>= pool reward) err-insufficient-pool)
 
-        ;; Transfer reward from contract to referee
-        (unwrap! (as-contract (stx-transfer? reward tx-sender tx-sender))
+        ;; Transfer reward from contract to referee (capture caller before as-contract)
+        (unwrap! (as-contract (stx-transfer? reward tx-sender caller))
                 err-insufficient-pool)
 
         ;; Update referral record
         (map-set referrals
-            { referee: tx-sender }
+            { referee: caller }
             (merge referral { referee-claimed: true })
         )
 
         (var-set reward-pool (- pool reward))
         (var-set total-rewards-paid (+ (var-get total-rewards-paid) reward))
-        (print { event: "referee-reward-claimed", referee: tx-sender, amount: reward })
+        (print { event: "referee-reward-claimed", referee: caller, amount: reward })
         (ok reward)
     )
 )
