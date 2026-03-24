@@ -2,7 +2,6 @@
 
 ;; Import traits
 (use-trait data-tracking-trait .data-traits.data-tracking-trait)
-(use-trait marketplace-trait .data-traits.marketplace-trait)
 
 ;; Constants
 (define-constant contract-owner tx-sender)

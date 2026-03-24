@@ -29,5 +29,6 @@
         (create-listing (uint uint uint) (response uint uint))
         (cancel-listing (uint) (response bool uint))
         (purchase-listing (uint) (response bool uint))
+        (set-marketplace-fee-rate (uint) (response bool uint))
     )
 )
