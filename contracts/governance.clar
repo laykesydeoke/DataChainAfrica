@@ -67,6 +67,18 @@
     { is-authorized: bool }
 )
 
+;; Vote delegation: a voter can delegate their vote to another address
+(define-map vote-delegates
+    { delegator: principal }
+    { delegate: principal }
+)
+
+;; Track proposal execution status separately from vote outcome
+(define-map proposal-execution
+    { id: uint }
+    { executed: bool, executed-at: uint }
+)
+
 ;; ============================================================
 ;; Admin Functions
 ;; ============================================================
@@ -101,6 +113,38 @@
         (asserts! (is-eq tx-sender contract-owner) (err err-owner-only))
         (asserts! (> blocks u0) (err err-invalid-input))
         (var-set default-voting-period blocks)
+        (ok true)
+    )
+)
+
+;; ============================================================
+;; Vote Delegation
+;; ============================================================
+
+;; Delegate your voting power to another address
+(define-public (delegate-vote (delegate principal))
+    (begin
+        (asserts! (is-standard delegate) (err err-invalid-input))
+        (asserts! (not (is-eq tx-sender delegate)) (err err-self-delegation))
+        ;; Prevent circular delegation: delegate must not have delegated to someone else
+        (asserts! (is-none (map-get? vote-delegates { delegator: delegate }))
+                 (err err-already-delegated))
+        (map-set vote-delegates
+            { delegator: tx-sender }
+            { delegate: delegate }
+        )
+        (print { action: "delegate-vote", delegator: tx-sender, delegate: delegate })
+        (ok true)
+    )
+)
+
+;; Remove vote delegation
+(define-public (revoke-delegation)
+    (begin
+        (asserts! (is-some (map-get? vote-delegates { delegator: tx-sender }))
+                 (err err-invalid-input))
+        (map-delete vote-delegates { delegator: tx-sender })
+        (print { action: "revoke-delegation", delegator: tx-sender })
         (ok true)
     )
 )
