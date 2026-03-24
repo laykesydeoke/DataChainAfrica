@@ -383,9 +383,11 @@
     (map-get? user-data-usage { user: user })
 )
 
-;; Get plan details
+;; Get plan details (trait-compatible: returns response)
 (define-read-only (get-plan-details (plan-id uint))
-    (map-get? data-plans { plan-id: plan-id })
+    (match (map-get? data-plans { plan-id: plan-id })
+        plan (ok plan)
+        (err u999))
 )
 
 ;; Get usage event details
