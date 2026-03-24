@@ -113,6 +113,9 @@ document.addEventListener('DOMContentLoaded', function () {
     // Check Hiro API connectivity
     checkApiStatus();
 
+    // Verify contracts are deployed (logs to console)
+    verifyContracts();
+
     checkExistingSession();
 });
 
@@ -124,6 +127,28 @@ function updateNetworkIndicator() {
     if (!indicator) return;
     indicator.textContent = CONFIG.network === 'mainnet' ? 'Mainnet' : 'Testnet';
     indicator.className = 'network-indicator ' + CONFIG.network;
+}
+
+// ============================================================
+// Contract Verification
+// ============================================================
+
+/**
+ * Verify that a contract is deployed at the expected address and log its
+ * function count. Used to confirm on-chain contract availability.
+ */
+function verifyContracts() {
+    var contracts = ['data-tracking', 'billing', 'marketplace', 'data-traits'];
+    contracts.forEach(function (name) {
+        getContractInfo(CONFIG.contractAddress + '.' + name)
+            .then(function (info) {
+                var fnCount = (info.functions || []).length;
+                console.log('[ContractInfo] ' + name + ': ' + fnCount + ' public functions deployed');
+            })
+            .catch(function (err) {
+                console.warn('[ContractInfo] ' + name + ' not found or error:', err.message);
+            });
+    });
 }
 
 // ============================================================
