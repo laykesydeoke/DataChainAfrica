@@ -127,7 +127,12 @@
 (define-public (set-promotional-rate (promo-id uint) (discount uint) (valid-blocks uint) (min-months uint))
     (begin
         (asserts! (is-eq tx-sender contract-owner) (err err-owner-only))
+        ;; Validate promo-id before using as map key
+        (asserts! (> promo-id u0) (err err-invalid-discount))
         (asserts! (<= discount u100) (err err-invalid-discount))
+        ;; Validate valid-blocks and min-months before using in map values
+        (asserts! (> valid-blocks u0) (err err-invalid-discount))
+        (asserts! (> min-months u0) (err err-invalid-discount))
         (ok (map-set promotional-rates
             { promo-id: promo-id }
             {
@@ -142,8 +147,12 @@
     (tracking-contract <data-tracking-trait>)
     (promo-id uint))
     ;; get-plan-details returns (response {...} uint) - unwrap! extracts the ok value
+    ;; Validate plan-id and tracking-contract before use
     (let
-        ((plan-details (unwrap! (contract-call? tracking-contract get-plan-details plan-id)
+        ((valid-plan (asserts! (> plan-id u0) (err err-invalid-plan)))
+         (valid-contract (asserts! (is-eq (contract-of tracking-contract) .data-tracking)
+                                  (err err-invalid-plan)))
+         (plan-details (unwrap! (contract-call? tracking-contract get-plan-details plan-id)
                                (err err-invalid-plan)))
          (promo (map-get? promotional-rates { promo-id: promo-id })))
         (let
@@ -174,6 +183,9 @@
 (define-public (process-renewal-payment (tracking-contract <data-tracking-trait>))
     (let
         ((user tx-sender)
+         ;; Validate tracking-contract is the known data-tracking contract
+         (valid-contract (asserts! (is-eq (contract-of tracking-contract) .data-tracking)
+                                  (err err-invalid-plan)))
          (subscription (unwrap! (map-get? user-subscriptions { user: tx-sender })
                                (err err-no-subscription))))
         (let
@@ -240,7 +252,9 @@
 ;; Owner approves refund and sends STX back to user
 (define-public (process-refund (user principal))
     (let
-        ((refund-req (unwrap! (map-get? refund-requests { user: user })
+        ;; Validate user principal input before using as map key
+        ((valid-user (asserts! (is-standard user) (err err-no-refund-request)))
+         (refund-req (unwrap! (map-get? refund-requests { user: user })
                              (err err-no-refund-request))))
         (asserts! (is-eq tx-sender contract-owner) (err err-owner-only))
         (asserts! (is-eq (get status refund-req) "pending") (err err-no-refund-request))
