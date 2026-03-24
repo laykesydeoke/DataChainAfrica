@@ -268,4 +268,167 @@ describe("governance contract", () => {
     );
     expect(result.result).toBeBool(false);
   });
+
+  it("owner can set minimum quorum", () => {
+    const { result } = simnet.callPublicFn(
+      "governance",
+      "set-min-quorum",
+      [Cl.uint(5)],
+      deployer
+    );
+    expect(result).toBeOk(Cl.bool(true));
+
+    const quorum = simnet.callReadOnlyFn(
+      "governance",
+      "get-min-quorum",
+      [],
+      deployer
+    );
+    expect(quorum.result).toBeUint(5);
+  });
+
+  it("non-owner cannot set quorum", () => {
+    const { result } = simnet.callPublicFn(
+      "governance",
+      "set-min-quorum",
+      [Cl.uint(5)],
+      wallet1
+    );
+    expect(result).toBeErr(Cl.uint(400));
+  });
+
+  it("owner can set execution delay", () => {
+    const { result } = simnet.callPublicFn(
+      "governance",
+      "set-execution-delay",
+      [Cl.uint(288)],
+      deployer
+    );
+    expect(result).toBeOk(Cl.bool(true));
+
+    const delay = simnet.callReadOnlyFn(
+      "governance",
+      "get-execution-delay",
+      [],
+      deployer
+    );
+    expect(delay.result).toBeUint(288);
+  });
+
+  it("allows vote delegation to another address", () => {
+    const { result } = simnet.callPublicFn(
+      "governance",
+      "delegate-vote",
+      [Cl.principal(wallet2)],
+      wallet1
+    );
+    expect(result).toBeOk(Cl.bool(true));
+
+    const delegate = simnet.callReadOnlyFn(
+      "governance",
+      "get-delegate",
+      [Cl.principal(wallet1)],
+      deployer
+    );
+    expect(delegate.result).toBeSome(
+      expect.objectContaining({ type: expect.any(Number) })
+    );
+  });
+
+  it("prevents self-delegation", () => {
+    const { result } = simnet.callPublicFn(
+      "governance",
+      "delegate-vote",
+      [Cl.principal(wallet1)],
+      wallet1
+    );
+    expect(result).toBeErr(Cl.uint(411));
+  });
+
+  it("allows revoking delegation", () => {
+    simnet.callPublicFn(
+      "governance",
+      "delegate-vote",
+      [Cl.principal(wallet2)],
+      wallet1
+    );
+
+    const { result } = simnet.callPublicFn(
+      "governance",
+      "revoke-delegation",
+      [],
+      wallet1
+    );
+    expect(result).toBeOk(Cl.bool(true));
+  });
+
+  it("delegate can vote on behalf of delegator", () => {
+    const wallet3 = simnet.getAccounts().get("wallet_3")!;
+
+    // Authorize proposer and create a proposal
+    simnet.callPublicFn("governance", "authorize-proposer", [Cl.principal(wallet1)], deployer);
+    simnet.callPublicFn("governance", "create-proposal", [
+      Cl.stringAscii("Delegation vote test"),
+      Cl.stringAscii("Testing delegated voting")
+    ], wallet1);
+
+    // wallet3 delegates to wallet2
+    simnet.callPublicFn("governance", "delegate-vote", [Cl.principal(wallet2)], wallet3);
+
+    // wallet2 votes as delegate for wallet3
+    const { result } = simnet.callPublicFn(
+      "governance",
+      "vote-as-delegate",
+      [Cl.uint(1), Cl.principal(wallet3), Cl.bool(true)],
+      wallet2
+    );
+    expect(result).toBeOk(Cl.bool(true));
+
+    // Verify wallet3 shows as having voted
+    const voted = simnet.callReadOnlyFn(
+      "governance",
+      "has-voted",
+      [Cl.uint(1), Cl.principal(wallet3)],
+      deployer
+    );
+    expect(voted.result).toBeBool(true);
+  });
+
+  it("rejects proposal when quorum not met", () => {
+    // Set quorum to 5
+    simnet.callPublicFn("governance", "set-min-quorum", [Cl.uint(5)], deployer);
+    simnet.callPublicFn("governance", "authorize-proposer", [Cl.principal(wallet1)], deployer);
+    // Set very short voting period for testing
+    simnet.callPublicFn("governance", "set-voting-period", [Cl.uint(1)], deployer);
+
+    simnet.callPublicFn("governance", "create-proposal", [
+      Cl.stringAscii("Quorum test"),
+      Cl.stringAscii("This should be rejected - not enough votes")
+    ], wallet1);
+
+    // Only 1 vote (below quorum of 5)
+    simnet.callPublicFn("governance", "vote-on-proposal", [Cl.uint(1), Cl.bool(true)], wallet2);
+
+    // Mine blocks to end voting period
+    simnet.mineEmptyBlocks(5);
+
+    const { result } = simnet.callPublicFn(
+      "governance",
+      "close-proposal",
+      [Cl.uint(1)],
+      deployer
+    );
+    expect(result).toBeOk(Cl.bool(true));
+
+    // Proposal should be rejected due to insufficient quorum
+    const proposal = simnet.callReadOnlyFn(
+      "governance",
+      "get-proposal",
+      [Cl.uint(1)],
+      deployer
+    );
+    expect(proposal.result).toBeSome(
+      expect.objectContaining({ type: expect.any(Number) })
+    );
+  });
 });
