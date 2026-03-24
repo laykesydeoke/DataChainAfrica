@@ -631,4 +631,86 @@ describe("data-tracking contract", () => {
     );
     expect(result).toBeErr(Cl.uint(102));
   });
+
+  it("owner can toggle emergency pause", () => {
+    const { result } = simnet.callPublicFn(
+      "data-tracking",
+      "set-emergency-pause",
+      [Cl.bool(true)],
+      deployer
+    );
+    expect(result).toBeOk(Cl.bool(true));
+
+    const paused = simnet.callReadOnlyFn("data-tracking", "is-paused", [], deployer);
+    expect(paused.result).toBeBool(true);
+  });
+
+  it("non-owner cannot toggle emergency pause", () => {
+    const { result } = simnet.callPublicFn(
+      "data-tracking",
+      "set-emergency-pause",
+      [Cl.bool(true)],
+      wallet1
+    );
+    expect(result).toBeErr(Cl.uint(100));
+  });
+
+  it("blocks plan creation when paused", () => {
+    simnet.callPublicFn("data-tracking", "set-emergency-pause", [Cl.bool(true)], deployer);
+
+    const { result } = simnet.callPublicFn(
+      "data-tracking",
+      "set-data-plan",
+      [Cl.uint(99), Cl.uint(500), Cl.uint(144), Cl.uint(50000000)],
+      deployer
+    );
+    expect(result).toBeErr(Cl.uint(109));
+
+    // Unpause for other tests
+    simnet.callPublicFn("data-tracking", "set-emergency-pause", [Cl.bool(false)], deployer);
+  });
+
+  it("blocks subscription when paused", () => {
+    simnet.callPublicFn("data-tracking", "set-data-plan",
+      [Cl.uint(88), Cl.uint(500), Cl.uint(144), Cl.uint(50000000)], deployer);
+    simnet.callPublicFn("data-tracking", "set-emergency-pause", [Cl.bool(true)], deployer);
+
+    const { result } = simnet.callPublicFn(
+      "data-tracking",
+      "subscribe-to-plan",
+      [Cl.uint(88), Cl.bool(false)],
+      wallet1
+    );
+    expect(result).toBeErr(Cl.uint(109));
+
+    simnet.callPublicFn("data-tracking", "set-emergency-pause", [Cl.bool(false)], deployer);
+  });
+
+  it("owner can set low balance threshold", () => {
+    const { result } = simnet.callPublicFn(
+      "data-tracking",
+      "set-low-balance-threshold",
+      [Cl.uint(2000)],
+      deployer
+    );
+    expect(result).toBeOk(Cl.bool(true));
+
+    const threshold = simnet.callReadOnlyFn(
+      "data-tracking",
+      "get-low-balance-threshold",
+      [],
+      deployer
+    );
+    expect(threshold.result).toBeUint(2000);
+  });
+
+  it("is-low-balance returns false for user with no plan", () => {
+    const result = simnet.callReadOnlyFn(
+      "data-tracking",
+      "is-low-balance",
+      [Cl.principal(wallet2)],
+      deployer
+    );
+    expect(result.result).toBeBool(false);
+  });
 });
