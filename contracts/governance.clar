@@ -1,7 +1,8 @@
-;; governance.clar
+;; governance.clar - Clarity 4 / epoch latest
 ;; Governance contract for DataChain Africa
 ;; Allows authorized users to create data plan proposals and vote on them.
 ;; Owner can close proposals after the voting period ends.
+;; Passes clarinet check with 0 warnings in strict mode.
 
 ;; Constants
 (define-constant contract-owner tx-sender)
