@@ -28,8 +28,10 @@
         <ul class="nav-menu">
             <li><a href="#features">Features</a></li>
             <li><a href="#plans">Plans</a></li>
+            <li><a href="#tx-history">History</a></li>
             <li><a href="#marketplace">Marketplace</a></li>
         </ul>
+        <span id="networkStatus" class="network-indicator testnet">Testnet</span>
         <button id="walletBtn" class="btn-wallet">Connect Wallet</button>
     </nav>
 
@@ -64,12 +66,16 @@
         <h2>Your Data Dashboard</h2>
         <div class="dash-grid">
             <div class="dash-card">
+                <span class="dash-label">STX Balance</span>
+                <span id="stxBalance" class="dash-value">--</span>
+            </div>
+            <div class="dash-card">
                 <span class="dash-label">Data Used</span>
                 <span id="dataUsed" class="dash-value">--</span>
                 <span class="dash-unit">MB</span>
             </div>
             <div class="dash-card">
-                <span class="dash-label">Balance</span>
+                <span class="dash-label">Data Balance</span>
                 <span id="dataBalance" class="dash-value">--</span>
                 <span class="dash-unit">MB</span>
             </div>
@@ -105,6 +111,13 @@
         </div>
     </section>
 
+    <section id="tx-history" class="tx-history">
+        <h2>Transaction History</h2>
+        <div id="txHistory" class="tx-history-container">
+            <p class="empty-state">Connect your wallet to view recent transactions.</p>
+        </div>
+    </section>
+
     <section id="marketplace" class="market">
         <h2>Data Marketplace</h2>
         <div id="listings" class="listings">
@@ -115,7 +128,7 @@
     <section class="stats">
         <div class="stats-grid">
             <div class="stat">
-                <span class="stat-value">4</span>
+                <span class="stat-value">5</span>
                 <span class="stat-label">Smart Contracts</span>
             </div>
             <div class="stat">
@@ -126,6 +139,10 @@
                 <span class="stat-value">P2P</span>
                 <span class="stat-label">Data Trading</span>
             </div>
+            <div class="stat">
+                <span class="stat-value" id="apiStatus">Live</span>
+                <span class="stat-label">Hiro API</span>
+            </div>
         </div>
     </section>
 
@@ -134,17 +151,22 @@
             <div>
                 <h3>DataChain Africa</h3>
                 <p>Bringing transparency to mobile data in Nigeria.</p>
+                <p style="margin-top:0.5rem;font-size:0.85rem;color:var(--muted);">
+                    Powered by <a href="https://www.stacks.co" target="_blank" rel="noopener">Stacks</a>
+                    &amp; <a href="https://www.hiro.so" target="_blank" rel="noopener">Hiro API</a>
+                </p>
             </div>
             <div>
                 <h4>Resources</h4>
                 <ul>
                     <li><a href="#">Docs</a></li>
                     <li><a href="#">Smart Contracts</a></li>
-                    <li><a href="https://github.com/laykesydeoke/DataChainAfrica">GitHub</a></li>
+                    <li><a href="https://github.com/laykesydeoke/DataChainAfrica" target="_blank" rel="noopener">GitHub</a></li>
+                    <li><a href="https://explorer.hiro.so/" target="_blank" rel="noopener">Stacks Explorer</a></li>
                 </ul>
             </div>
         </div>
-        <p class="copyright">2024 DataChain Africa. Built on Stacks.</p>
+        <p class="copyright">2026 DataChain Africa. Built on Stacks.</p>
     </footer>
 
     <script src="app.js"></script>

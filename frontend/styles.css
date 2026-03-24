@@ -338,6 +338,76 @@ footer {
     font-size: 0.82rem;
 }
 
+/* Network Status Indicator */
+.network-indicator {
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 0.25rem 0.6rem;
+    border-radius: 999px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+.network-indicator.testnet {
+    background: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffc107;
+}
+.network-indicator.mainnet {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #28a745;
+}
+
+/* Transaction History */
+.tx-history {
+    padding: 4rem 3rem;
+    background: var(--white);
+}
+.tx-history h2 {
+    font-size: 1.8rem;
+    margin-bottom: 1.5rem;
+    color: var(--dark);
+}
+.tx-history-container {
+    max-width: 800px;
+}
+.tx-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+.tx-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem 1rem;
+    background: var(--bg);
+    border-radius: 8px;
+    font-size: 0.9rem;
+    border: 1px solid #e2e8f0;
+}
+.tx-id {
+    font-family: monospace;
+    color: var(--muted);
+    flex: 1;
+}
+.tx-type {
+    text-transform: capitalize;
+    color: var(--text);
+}
+.tx-status {
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    text-transform: uppercase;
+}
+.status-success { background: #d4edda; color: #155724; }
+.status-pending { background: #fff3cd; color: #856404; }
+.status-abort_by_response,
+.status-abort_by_post_condition { background: #f8d7da; color: #721c24; }
+
 /* Mobile */
 @media (max-width: 768px) {
     .nav { padding: 0.8rem 1.2rem; }
@@ -347,4 +417,5 @@ footer {
     .hero-cta { flex-direction: column; align-items: center; }
     .dash-grid { flex-direction: column; }
     .footer-grid { flex-direction: column; gap: 1.5rem; }
+    .tx-history { padding: 2rem 1.2rem; }
 }

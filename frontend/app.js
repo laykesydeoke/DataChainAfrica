@@ -1,7 +1,99 @@
-var API_URL = 'https://api.testnet.hiro.so';
-var CONTRACT_ADDRESS = 'ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM';
+// DataChain Africa - Frontend App
+// Stacks API integration using Hiro API
+
+// ============================================================
+// Network Configuration
+// ============================================================
+var CONFIG = {
+    network: 'testnet', // 'testnet' or 'mainnet'
+    testnetApi: 'https://api.testnet.hiro.so',
+    mainnetApi: 'https://api.hiro.so',
+    get apiBase() {
+        return this.network === 'mainnet' ? this.mainnetApi : this.testnetApi;
+    },
+    contractAddress: 'ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM'
+};
+
+// Legacy alias for backward compat
+var API_URL = CONFIG.apiBase;
+var CONTRACT_ADDRESS = CONFIG.contractAddress;
+
 var userAddress = null;
 
+// ============================================================
+// Stacks API Helpers
+// ============================================================
+
+/**
+ * Get the STX and token balances for an address.
+ * Calls GET /extended/v1/address/{addr}/balances
+ */
+function getAccountBalance(address) {
+    var url = CONFIG.apiBase + '/extended/v1/address/' + address + '/balances';
+    return fetch(url, { headers: { 'Accept': 'application/json' } })
+        .then(function (r) {
+            if (!r.ok) throw new Error('Balance fetch failed: HTTP ' + r.status);
+            return r.json();
+        });
+}
+
+/**
+ * Get the ABI / interface of a deployed contract.
+ * Calls GET /v2/contracts/interface/{addr}/{name}
+ */
+function getContractInfo(contractId) {
+    var parts = contractId.split('.');
+    var addr = parts[0];
+    var name = parts[1];
+    var url = CONFIG.apiBase + '/v2/contracts/interface/' + addr + '/' + name;
+    return fetch(url, { headers: { 'Accept': 'application/json' } })
+        .then(function (r) {
+            if (!r.ok) throw new Error('Contract info fetch failed: HTTP ' + r.status);
+            return r.json();
+        });
+}
+
+/**
+ * Call a read-only function on a deployed contract.
+ * Calls POST /v2/contracts/call-read/{addr}/{name}/{fn}
+ */
+function callReadOnly(contract, fnName, args) {
+    var url = CONFIG.apiBase + '/v2/contracts/call-read/' +
+        CONFIG.contractAddress + '/' + contract + '/' + fnName;
+    return fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            sender: CONFIG.contractAddress,
+            arguments: args || []
+        })
+    }).then(function (r) {
+        if (!r.ok) {
+            throw new Error('HTTP ' + r.status + ' from ' + fnName);
+        }
+        return r.json();
+    }).catch(function (err) {
+        console.error('callReadOnly error [' + contract + '.' + fnName + ']:', err);
+        throw err;
+    });
+}
+
+/**
+ * Get transaction status by txid.
+ * Calls GET /extended/v1/tx/{txid}
+ */
+function getTransactionStatus(txid) {
+    var url = CONFIG.apiBase + '/extended/v1/tx/' + txid;
+    return fetch(url, { headers: { 'Accept': 'application/json' } })
+        .then(function (r) {
+            if (!r.ok) throw new Error('TX status fetch failed: HTTP ' + r.status);
+            return r.json();
+        });
+}
+
+// ============================================================
+// DOM Ready
+// ============================================================
 document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('walletBtn').addEventListener('click', handleWalletClick);
 
@@ -9,13 +101,81 @@ document.addEventListener('DOMContentLoaded', function () {
     planButtons.forEach(function (btn) {
         btn.addEventListener('click', function () {
             var planId = this.getAttribute('data-plan');
-            subscribeToPlan(parseInt(planId));
+            if (planId) {
+                subscribeToPlan(parseInt(planId));
+            }
         });
     });
+
+    // Show network indicator on page load
+    updateNetworkIndicator();
+
+    // Check Hiro API connectivity
+    checkApiStatus();
+
+    // Verify contracts are deployed (logs to console)
+    verifyContracts();
 
     checkExistingSession();
 });
 
+// ============================================================
+// Network Status Indicator
+// ============================================================
+function updateNetworkIndicator() {
+    var indicator = document.getElementById('networkStatus');
+    if (!indicator) return;
+    indicator.textContent = CONFIG.network === 'mainnet' ? 'Mainnet' : 'Testnet';
+    indicator.className = 'network-indicator ' + CONFIG.network;
+}
+
+// ============================================================
+// Contract Verification
+// ============================================================
+
+/**
+ * Verify that a contract is deployed at the expected address and log its
+ * function count. Used to confirm on-chain contract availability.
+ */
+function verifyContracts() {
+    var contracts = ['data-tracking', 'billing', 'marketplace', 'data-traits'];
+    contracts.forEach(function (name) {
+        getContractInfo(CONFIG.contractAddress + '.' + name)
+            .then(function (info) {
+                var fnCount = (info.functions || []).length;
+                console.log('[ContractInfo] ' + name + ': ' + fnCount + ' public functions deployed');
+            })
+            .catch(function (err) {
+                console.warn('[ContractInfo] ' + name + ' not found or error:', err.message);
+            });
+    });
+}
+
+// ============================================================
+// API Status Check
+// ============================================================
+function checkApiStatus() {
+    var statusEl = document.getElementById('apiStatus');
+    if (!statusEl) return;
+    fetch(CONFIG.apiBase + '/extended/v1/info', { headers: { 'Accept': 'application/json' } })
+        .then(function (r) {
+            if (r.ok) {
+                statusEl.textContent = 'Live';
+                statusEl.style.color = 'var(--green)';
+            } else {
+                statusEl.textContent = 'Down';
+                statusEl.style.color = '#dc3545';
+            }
+        })
+        .catch(function () {
+            statusEl.textContent = 'Offline';
+            statusEl.style.color = '#dc3545';
+        });
+}
+
+// ============================================================
+// Session Management
+// ============================================================
 function checkExistingSession() {
     try {
         var session = localStorage.getItem('blockstack-session');
@@ -44,6 +204,7 @@ function handleWalletClick() {
         btn.textContent = 'Connect Wallet';
         btn.classList.remove('connected');
         setDashboardPlaceholder();
+        clearStxBalance();
         return;
     }
     connectWallet();
@@ -91,9 +252,37 @@ function onConnected(address) {
     btn.textContent = address.slice(0, 6) + '...' + address.slice(-4);
     btn.classList.add('connected');
     loadDashboard(address);
+    loadStxBalance(address);
     loadMarketplace();
+    loadTransactionHistory(address);
 }
 
+// ============================================================
+// STX Balance Display
+// ============================================================
+function loadStxBalance(address) {
+    getAccountBalance(address)
+        .then(function (data) {
+            var stxBalance = document.getElementById('stxBalance');
+            if (stxBalance && data && data.stx && data.stx.balance) {
+                var microStx = parseInt(data.stx.balance, 10);
+                var stx = (microStx / 1000000).toFixed(2);
+                stxBalance.textContent = stx + ' STX';
+            }
+        })
+        .catch(function (err) {
+            console.error('STX balance load error:', err);
+        });
+}
+
+function clearStxBalance() {
+    var stxBalance = document.getElementById('stxBalance');
+    if (stxBalance) stxBalance.textContent = '--';
+}
+
+// ============================================================
+// Dashboard
+// ============================================================
 function loadDashboard(address) {
     var hexAddr = principalToHex(address);
     if (!hexAddr) {
@@ -141,11 +330,61 @@ function updateDashboard(usage) {
 }
 
 function setDashboardPlaceholder() {
-    document.getElementById('dataUsed').textContent = '0';
-    document.getElementById('dataBalance').textContent = '0';
-    document.getElementById('planType').textContent = 'None';
+    var dataUsed = document.getElementById('dataUsed');
+    var dataBalance = document.getElementById('dataBalance');
+    var planType = document.getElementById('planType');
+    if (dataUsed) dataUsed.textContent = '0';
+    if (dataBalance) dataBalance.textContent = '0';
+    if (planType) planType.textContent = 'None';
 }
 
+// ============================================================
+// Transaction History
+// ============================================================
+function loadTransactionHistory(address) {
+    var histContainer = document.getElementById('txHistory');
+    if (!histContainer) return;
+
+    var url = CONFIG.apiBase + '/extended/v1/address/' + address + '/transactions?limit=5';
+    fetch(url, { headers: { 'Accept': 'application/json' } })
+        .then(function (r) {
+            if (!r.ok) throw new Error('TX history fetch failed');
+            return r.json();
+        })
+        .then(function (data) {
+            renderTransactionHistory(histContainer, data.results || []);
+        })
+        .catch(function (err) {
+            console.error('TX history load error:', err);
+            histContainer.innerHTML = '<p class="empty-state">Could not load transaction history.</p>';
+        });
+}
+
+function renderTransactionHistory(container, txs) {
+    container.innerHTML = '';
+    if (!txs || txs.length === 0) {
+        container.innerHTML = '<p class="empty-state">No recent transactions.</p>';
+        return;
+    }
+    var list = document.createElement('ul');
+    list.className = 'tx-list';
+    txs.forEach(function (tx) {
+        var item = document.createElement('li');
+        item.className = 'tx-item';
+        var status = tx.tx_status || 'unknown';
+        var txType = tx.tx_type || 'unknown';
+        var shortTxId = tx.tx_id ? tx.tx_id.slice(0, 10) + '...' : 'N/A';
+        item.innerHTML = '<span class="tx-id">' + shortTxId + '</span>' +
+            '<span class="tx-type">' + txType + '</span>' +
+            '<span class="tx-status status-' + status + '">' + status + '</span>';
+        list.appendChild(item);
+    });
+    container.appendChild(list);
+}
+
+// ============================================================
+// Plan Subscription
+// ============================================================
 function subscribeToPlan(planId) {
     if (!userAddress) {
         alert('Please connect your wallet first');
@@ -164,7 +403,7 @@ function subscribeToPlan(planId) {
         functionArgs: [
             uintCV(planId),
             contractPrincipalCV(CONTRACT_ADDRESS, 'data-tracking'),
-            uintCV(0)
+            uintCV(1)
         ],
         appDetails: {
             name: 'DataChain Africa',
@@ -172,6 +411,8 @@ function subscribeToPlan(planId) {
         },
         onFinish: function (data) {
             alert('Subscription submitted! TX: ' + data.txId);
+            // Poll for transaction status
+            pollTransactionStatus(data.txId);
         },
         onCancel: function () {
             console.log('Transaction cancelled');
@@ -185,6 +426,40 @@ function subscribeToPlan(planId) {
     }
 }
 
+// ============================================================
+// Transaction Status Polling
+// ============================================================
+function pollTransactionStatus(txid) {
+    var maxAttempts = 10;
+    var attempt = 0;
+    var interval = setInterval(function () {
+        attempt++;
+        getTransactionStatus(txid)
+            .then(function (tx) {
+                if (tx.tx_status === 'success') {
+                    clearInterval(interval);
+                    console.log('Transaction confirmed:', txid);
+                    if (userAddress) {
+                        loadDashboard(userAddress);
+                        loadTransactionHistory(userAddress);
+                    }
+                } else if (tx.tx_status === 'abort_by_response' || tx.tx_status === 'abort_by_post_condition') {
+                    clearInterval(interval);
+                    console.error('Transaction failed:', tx.tx_status);
+                } else if (attempt >= maxAttempts) {
+                    clearInterval(interval);
+                    console.warn('Transaction polling timed out after ' + maxAttempts + ' attempts');
+                }
+            })
+            .catch(function () {
+                if (attempt >= maxAttempts) clearInterval(interval);
+            });
+    }, 5000);
+}
+
+// ============================================================
+// Marketplace
+// ============================================================
 function loadMarketplace() {
     callReadOnly('marketplace', 'get-listing-count', [])
         .then(function (data) {
@@ -272,6 +547,7 @@ function purchaseListing(listingId) {
         },
         onFinish: function (data) {
             alert('Purchase submitted! TX: ' + data.txId);
+            pollTransactionStatus(data.txId);
             loadMarketplace();
         },
         onCancel: function () {
@@ -286,35 +562,13 @@ function purchaseListing(listingId) {
     }
 }
 
-function callReadOnly(contract, fnName, args) {
-    var url = API_URL + '/v2/contracts/call-read/' +
-        CONTRACT_ADDRESS + '/' + contract + '/' + fnName;
-    return fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            sender: CONTRACT_ADDRESS,
-            arguments: args || []
-        })
-    }).then(function (r) {
-        if (!r.ok) {
-            throw new Error('HTTP ' + r.status + ' from ' + fnName);
-        }
-        return r.json();
-    }).catch(function (err) {
-        console.error('callReadOnly error [' + contract + '.' + fnName + ']:', err);
-        throw err;
-    });
-}
-
+// ============================================================
+// Clarity Value Encoding Helpers
+// ============================================================
 function principalToHex(address) {
-    // Encode a Stacks principal as Clarity serialized bytes
-    // Version byte: 0x16 for mainnet P2PKH, 0x1a for testnet P2PKH
     var isTestnet = address.startsWith('ST');
     var versionByte = isTestnet ? 0x1a : 0x16;
-    // Base58 alphabet
     var ALPHABET = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
-    // Decode base58 address to bytes
     function base58Decode(str) {
         var bytes = [0];
         for (var i = 0; i < str.length; i++) {
@@ -332,7 +586,6 @@ function principalToHex(address) {
                 carry >>= 8;
             }
         }
-        // Add leading zero bytes
         for (var k = 0; k < str.length && str[k] === '1'; k++) {
             bytes.push(0);
         }
@@ -340,9 +593,7 @@ function principalToHex(address) {
     }
     try {
         var decoded = base58Decode(address);
-        // decoded is [version(1)] + [hash160(20)] + [checksum(4)]
         var hashBytes = decoded.slice(1, 21);
-        // Clarity standard principal: 0x05 (type) + version(1) + hash160(20)
         var result = '05' + versionByte.toString(16).padStart(2, '0');
         for (var b = 0; b < hashBytes.length; b++) {
             result += hashBytes[b].toString(16).padStart(2, '0');
@@ -375,15 +626,12 @@ function parseClarityUint(hex) {
 }
 
 function parseClarityValue(val) {
-    // Handle already-parsed objects
     if (typeof val === 'object' && val !== null) {
-        // Clarity response object with type tag
         if (val.type !== undefined) {
             return parseClarityTyped(val);
         }
         return val;
     }
-    // Handle hex-encoded Clarity values
     if (typeof val === 'string' && val.startsWith('0x')) {
         return parseClarityHex(val.slice(2));
     }
@@ -391,7 +639,6 @@ function parseClarityValue(val) {
 }
 
 function parseClarityTyped(val) {
-    // type 1 = uint, type 3 = bool, type 12 = tuple, type 9 = optional some
     if (val.type === 1) return val.value ? parseInt(val.value, 10) : 0;
     if (val.type === 3) return val.value === true || val.value === 'true';
     if (val.type === 12 && val.data) {
@@ -410,12 +657,9 @@ function parseClarityHex(hex) {
     if (!hex || hex.length < 2) return {};
     var typeTag = parseInt(hex.slice(0, 2), 16);
     var data = hex.slice(2);
-    // 0x01 = uint (16 bytes big-endian)
     if (typeTag === 0x01) return parseInt(data, 16);
-    // 0x03 = true, 0x04 = false
     if (typeTag === 0x03) return true;
     if (typeTag === 0x04) return false;
-    // 0x0c = tuple
     if (typeTag === 0x0c) return {};
     return {};
 }
