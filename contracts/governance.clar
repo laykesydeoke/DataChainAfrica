@@ -405,3 +405,37 @@
         false
     )
 )
+
+;; Get the current minimum quorum setting
+(define-read-only (get-min-quorum)
+    (var-get min-quorum)
+)
+
+;; Get the current execution delay in blocks
+(define-read-only (get-execution-delay)
+    (var-get execution-delay)
+)
+
+;; Get who a voter has delegated to (if anyone)
+(define-read-only (get-delegate (delegator principal))
+    (map-get? vote-delegates { delegator: delegator })
+)
+
+;; Check if a proposal has been executed
+(define-read-only (is-proposal-executed (proposal-id uint))
+    (match (map-get? proposal-execution { id: proposal-id })
+        exec (get executed exec)
+        false
+    )
+)
+
+;; Check if a proposal is ready for execution (passed + delay elapsed)
+(define-read-only (is-ready-for-execution (proposal-id uint))
+    (match (map-get? proposals { id: proposal-id })
+        proposal (and
+            (is-eq (get status proposal) status-passed)
+            (>= stacks-block-height (+ (get ends-at proposal) (var-get execution-delay)))
+            (is-none (map-get? proposal-execution { id: proposal-id })))
+        false
+    )
+)
