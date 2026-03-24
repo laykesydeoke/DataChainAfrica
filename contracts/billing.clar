@@ -2,7 +2,6 @@
 
 ;; Import traits
 (use-trait data-tracking-trait .data-traits.data-tracking-trait)
-(use-trait marketplace-trait .data-traits.marketplace-trait)
 
 ;; Constants
 (define-constant contract-owner tx-sender)
@@ -138,12 +137,13 @@
             }
         ))))
 
-(define-public (subscribe-and-pay 
-    (plan-id uint) 
+(define-public (subscribe-and-pay
+    (plan-id uint)
     (tracking-contract <data-tracking-trait>)
     (promo-id uint))
-    (let 
-        ((plan-details (unwrap! (contract-call? tracking-contract get-plan-details plan-id) 
+    ;; get-plan-details returns (response {...} uint) - unwrap! extracts the ok value
+    (let
+        ((plan-details (unwrap! (contract-call? tracking-contract get-plan-details plan-id)
                                (err err-invalid-plan)))
          (promo (map-get? promotional-rates { promo-id: promo-id })))
         (let

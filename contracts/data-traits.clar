@@ -1,12 +1,15 @@
+;; Trait definitions for DataChainAfrica contracts
+;; All return types use (response ok-type err-type) as required by Clarity 4
+
 (define-trait data-tracking-trait
     (
-        ;; Get plan details (read-only)
-        (get-plan-details (uint) (optional {
+        ;; Get plan details
+        (get-plan-details (uint) (response {
             data-amount: uint,
             duration-blocks: uint,
             price: uint,
             is-active: bool
-        }))
+        } uint))
 
         ;; Subscribe to plan
         (subscribe-to-plan (uint bool) (response bool uint))
@@ -29,5 +32,6 @@
         (create-listing (uint uint uint) (response uint uint))
         (cancel-listing (uint) (response bool uint))
         (purchase-listing (uint) (response bool uint))
+        (set-marketplace-fee-rate (uint) (response bool uint))
     )
 )

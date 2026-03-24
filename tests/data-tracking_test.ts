@@ -382,13 +382,14 @@ describe("data-tracking contract", () => {
 
     // The marketplace contract would call transfer-data-balance
     // Here we verify the function exists and authorization works
+    // get-plan-details now returns (response {...} uint) after trait fix
     const result = simnet.callReadOnlyFn(
       "data-tracking",
       "get-plan-details",
       [Cl.uint(1)],
       wallet1
     );
-    expect(result.result).toBeSome(
+    expect(result.result).toBeOk(
       expect.objectContaining({ type: expect.any(Number) })
     );
   });
@@ -410,13 +411,14 @@ describe("data-tracking contract", () => {
     expect(result).toBeOk(Cl.bool(true));
 
     // Verify plan is deactivated
+    // get-plan-details now returns (response {...} uint) after trait fix
     const plan = simnet.callReadOnlyFn(
       "data-tracking",
       "get-plan-details",
       [Cl.uint(5)],
       deployer
     );
-    expect(plan.result).toBeSome(
+    expect(plan.result).toBeOk(
       Cl.tuple({
         "data-amount": Cl.uint(1000),
         "duration-blocks": Cl.uint(288),
