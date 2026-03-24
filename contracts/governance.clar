@@ -53,3 +53,71 @@
     { proposer: principal }
     { is-authorized: bool }
 )
+
+;; ============================================================
+;; Admin Functions
+;; ============================================================
+
+;; Allow owner to authorize a principal to create proposals
+(define-public (authorize-proposer (proposer principal))
+    (begin
+        (asserts! (is-eq tx-sender contract-owner) (err err-owner-only))
+        (asserts! (is-standard proposer) (err err-invalid-input))
+        (ok (map-set authorized-proposers
+            { proposer: proposer }
+            { is-authorized: true }
+        ))
+    )
+)
+
+;; Allow owner to revoke a proposer's authorization
+(define-public (revoke-proposer (proposer principal))
+    (begin
+        (asserts! (is-eq tx-sender contract-owner) (err err-owner-only))
+        (asserts! (is-standard proposer) (err err-invalid-input))
+        (ok (map-set authorized-proposers
+            { proposer: proposer }
+            { is-authorized: false }
+        ))
+    )
+)
+
+;; Allow owner to update the default voting period
+(define-public (set-voting-period (blocks uint))
+    (begin
+        (asserts! (is-eq tx-sender contract-owner) (err err-owner-only))
+        (asserts! (> blocks u0) (err err-invalid-input))
+        (var-set default-voting-period blocks)
+        (ok true)
+    )
+)
+
+;; ============================================================
+;; Proposal Creation
+;; ============================================================
+
+;; Create a new proposal (authorized proposers only)
+(define-public (create-proposal (title (string-ascii 64)) (description (string-ascii 256)))
+    (let
+        ((proposal-id (+ (var-get proposal-counter) u1))
+         (auth (default-to { is-authorized: false }
+                (map-get? authorized-proposers { proposer: tx-sender }))))
+        (asserts! (get is-authorized auth) (err err-not-active))
+        (asserts! (> (len title) u0) (err err-invalid-proposal))
+        (asserts! (> (len description) u0) (err err-invalid-proposal))
+        (var-set proposal-counter proposal-id)
+        (ok (map-set proposals
+            { id: proposal-id }
+            {
+                title: title,
+                description: description,
+                proposer: tx-sender,
+                votes-for: u0,
+                votes-against: u0,
+                status: status-active,
+                created-at: stacks-block-height,
+                ends-at: (+ stacks-block-height (var-get default-voting-period))
+            }
+        ))
+    )
+)
