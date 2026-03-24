@@ -190,3 +190,60 @@
         ))
     )
 )
+
+;; ============================================================
+;; Read-Only Functions
+;; ============================================================
+
+;; Get full proposal details by id
+(define-read-only (get-proposal (proposal-id uint))
+    (map-get? proposals { id: proposal-id })
+)
+
+;; Get current vote counts for a proposal
+(define-read-only (get-vote-count (proposal-id uint))
+    (match (map-get? proposals { id: proposal-id })
+        proposal (ok {
+            votes-for: (get votes-for proposal),
+            votes-against: (get votes-against proposal),
+            total: (+ (get votes-for proposal) (get votes-against proposal))
+        })
+        (err err-proposal-not-found)
+    )
+)
+
+;; Check if a voter has already voted on a specific proposal
+(define-read-only (has-voted (proposal-id uint) (voter principal))
+    (is-some (map-get? voter-record { proposal-id: proposal-id, voter: voter }))
+)
+
+;; Get how a voter voted on a proposal (true=for, false=against)
+(define-read-only (get-vote (proposal-id uint) (voter principal))
+    (map-get? voter-record { proposal-id: proposal-id, voter: voter })
+)
+
+;; Get total number of proposals created
+(define-read-only (get-proposal-count)
+    (var-get proposal-counter)
+)
+
+;; Get the current default voting period in blocks
+(define-read-only (get-voting-period)
+    (var-get default-voting-period)
+)
+
+;; Check if a principal is an authorized proposer
+(define-read-only (is-authorized-proposer (proposer principal))
+    (default-to false
+        (get is-authorized (map-get? authorized-proposers { proposer: proposer })))
+)
+
+;; Check if a proposal's voting period is still active
+(define-read-only (is-voting-active (proposal-id uint))
+    (match (map-get? proposals { id: proposal-id })
+        proposal (and
+            (is-eq (get status proposal) status-active)
+            (< stacks-block-height (get ends-at proposal)))
+        false
+    )
+)
