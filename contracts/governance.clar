@@ -15,6 +15,12 @@
 (define-constant err-already-closed (err u406))
 (define-constant err-voting-not-ended (err u407))
 (define-constant err-invalid-input (err u408))
+(define-constant err-quorum-not-met (err u409))
+(define-constant err-already-delegated (err u410))
+(define-constant err-self-delegation (err u411))
+(define-constant err-not-executed (err u412))
+(define-constant err-already-executed (err u413))
+(define-constant err-execution-delay (err u414))
 
 ;; Proposal status values
 (define-constant status-active "active")
@@ -24,6 +30,12 @@
 
 ;; Voting period in blocks: ~7 days at 10 min/block = 1008 blocks
 (define-data-var default-voting-period uint u1008)
+
+;; Minimum quorum: at least this many total votes required for a proposal to pass
+(define-data-var min-quorum uint u3)
+
+;; Execution delay in blocks after proposal passes (~24 hours = 144 blocks)
+(define-data-var execution-delay uint u144)
 
 ;; Proposal counter
 (define-data-var proposal-counter uint u0)
