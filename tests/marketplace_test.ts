@@ -63,6 +63,33 @@ describe("marketplace contract", () => {
     expect(result).toBeErr(Cl.uint(302));
   });
 
+  it("rejects create-listing with zero price after strict checks", () => {
+    setupUserWithData();
+
+    const { result } = simnet.callPublicFn(
+      "marketplace",
+      "create-listing",
+      [
+        Cl.uint(100),
+        Cl.uint(0),
+        Cl.uint(500),
+        Cl.contractPrincipal(deployer, "data-tracking"),
+      ],
+      wallet1
+    );
+    expect(result).toBeErr(Cl.uint(301));
+  });
+
+  it("rejects cancel-listing with listing-id zero after strict checks", () => {
+    const { result } = simnet.callPublicFn(
+      "marketplace",
+      "cancel-listing",
+      [Cl.uint(0)],
+      wallet1
+    );
+    expect(result).toBeErr(Cl.uint(306));
+  });
+
   it("allows seller to cancel listing", () => {
     setupUserWithData();
 
