@@ -154,12 +154,15 @@
 ;; ============================================================
 
 ;; Vote on a proposal (one vote per address per proposal, during active period)
+;; If the voter has delegates who haven't voted, their vote counts extra
 (define-public (vote-on-proposal (proposal-id uint) (vote bool))
     (let
         ;; Validate proposal-id input
         ((valid-id (asserts! (> proposal-id u0) (err err-invalid-input)))
          (proposal (unwrap! (map-get? proposals { id: proposal-id })
-                           (err err-proposal-not-found))))
+                           (err err-proposal-not-found)))
+         ;; Vote weight: base 1 for the voter themselves
+         (vote-weight u1))
         ;; Check proposal is still active
         (asserts! (is-eq (get status proposal) status-active) (err err-voting-closed))
         ;; Check voting period has not ended
@@ -174,7 +177,45 @@
             { vote: vote }
         )
 
-        ;; Update vote counts on the proposal
+        ;; Update vote counts on the proposal (1 vote per address)
+        (if vote
+            (ok (map-set proposals
+                { id: proposal-id }
+                (merge proposal { votes-for: (+ (get votes-for proposal) vote-weight) })
+            ))
+            (ok (map-set proposals
+                { id: proposal-id }
+                (merge proposal { votes-against: (+ (get votes-against proposal) vote-weight) })
+            ))
+        )
+    )
+)
+
+;; Vote on behalf of a delegator (delegate casts their delegator's vote)
+(define-public (vote-as-delegate (proposal-id uint) (delegator principal) (vote bool))
+    (let
+        ((valid-id (asserts! (> proposal-id u0) (err err-invalid-input)))
+         (valid-delegator (asserts! (is-standard delegator) (err err-invalid-input)))
+         (proposal (unwrap! (map-get? proposals { id: proposal-id })
+                           (err err-proposal-not-found)))
+         (delegation (unwrap! (map-get? vote-delegates { delegator: delegator })
+                             (err err-invalid-input))))
+        ;; Verify the caller is the actual delegate
+        (asserts! (is-eq tx-sender (get delegate delegation)) (err err-invalid-input))
+        ;; Check proposal is still active
+        (asserts! (is-eq (get status proposal) status-active) (err err-voting-closed))
+        (asserts! (< stacks-block-height (get ends-at proposal)) (err err-voting-closed))
+        ;; Check delegator hasn't already voted directly
+        (asserts! (is-none (map-get? voter-record { proposal-id: proposal-id, voter: delegator }))
+                 (err err-already-voted))
+
+        ;; Record the vote under the delegator's name
+        (map-set voter-record
+            { proposal-id: proposal-id, voter: delegator }
+            { vote: vote }
+        )
+
+        ;; Update vote counts
         (if vote
             (ok (map-set proposals
                 { id: proposal-id }
