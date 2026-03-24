@@ -29,7 +29,7 @@ epoch = 'latest'
 passes = ['check_checker']
 
 [repl.analysis.check_checker]
-strict = false
+strict = true
 trusted_sender = false
 trusted_caller = false
 callee_filter = false
