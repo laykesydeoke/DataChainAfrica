@@ -132,6 +132,36 @@
 )
 
 ;; ============================================================
+;; Close Proposal
+;; ============================================================
+
+;; Owner closes a proposal after the voting period ends, determining outcome
+(define-public (close-proposal (proposal-id uint))
+    (let
+        ;; Validate proposal-id input
+        ((valid-id (asserts! (> proposal-id u0) (err err-invalid-input)))
+         (proposal (unwrap! (map-get? proposals { id: proposal-id })
+                           (err err-proposal-not-found))))
+        ;; Only owner can close proposals
+        (asserts! (is-eq tx-sender contract-owner) (err err-owner-only))
+        ;; Proposal must be active
+        (asserts! (is-eq (get status proposal) status-active) (err err-already-closed))
+        ;; Voting period must have ended
+        (asserts! (>= stacks-block-height (get ends-at proposal)) (err err-voting-not-ended))
+
+        ;; Determine outcome: passed if votes-for > votes-against
+        (let ((outcome (if (> (get votes-for proposal) (get votes-against proposal))
+                    status-passed
+                    status-rejected)))
+            (ok (map-set proposals
+                { id: proposal-id }
+                (merge proposal { status: outcome })
+            ))
+        )
+    )
+)
+
+;; ============================================================
 ;; Proposal Creation
 ;; ============================================================
 
