@@ -79,6 +79,8 @@
 (define-public (set-data-plan (plan-id uint) (data-amount uint) (duration-blocks uint) (price uint))
     (begin
         (asserts! (is-eq tx-sender contract-owner) (err err-owner-only))
+        ;; Validate plan-id before using as map key
+        (asserts! (> plan-id u0) (err err-invalid-data))
         (asserts! (> data-amount u0) (err err-invalid-data))
         (asserts! (> duration-blocks u0) (err err-invalid-data))
         (asserts! (> price u0) (err err-invalid-data))
@@ -100,6 +102,8 @@
     (let
         (
             (user tx-sender)
+            ;; Validate plan-id before using as map key
+            (valid-plan-id (asserts! (> plan-id u0) (err err-invalid-plan)))
             (plan (unwrap! (map-get? data-plans { plan-id: plan-id }) (err err-invalid-plan)))
             (current-usage (map-get? user-data-usage { user: user }))
             (raw-rollover (match current-usage
@@ -135,6 +139,9 @@
     (let
         (
             (carrier tx-sender)
+            ;; Validate usage amount and user principal inputs
+            (valid-usage (asserts! (> usage u0) (err err-invalid-data)))
+            (valid-user (asserts! (is-standard user) (err err-invalid-data)))
             (is-authorized (default-to { is-authorized: false } (map-get? authorized-carriers { carrier: carrier })))
             (current-data (unwrap! (map-get? user-data-usage { user: user }) (err err-invalid-data)))
             (event-id (+ (var-get event-counter) u1))
@@ -190,11 +197,13 @@
 (define-public (process-plan-expiry (user principal))
     (let
         (
+            ;; Validate user principal input
+            (valid-user (asserts! (is-standard user) (err err-invalid-data)))
             (current-data (unwrap! (map-get? user-data-usage { user: user }) (err err-invalid-data)))
             (current-plan (unwrap! (map-get? data-plans { plan-id: (get plan-type current-data) }) (err err-invalid-plan)))
         )
         (asserts! (>= stacks-block-height (get plan-expiry current-data)) (err err-invalid-data))
-        
+
         (if (get auto-renew current-data)
             (ok (map-set user-data-usage
                 { user: user }
@@ -233,6 +242,8 @@
 (define-public (authorize-marketplace (marketplace principal))
     (begin
         (asserts! (is-eq tx-sender contract-owner) (err err-owner-only))
+        ;; Only owner can call this; marketplace principal is already validated by caller auth check
+        (asserts! (not (is-eq marketplace tx-sender)) (err err-invalid-data))
         (ok (map-set authorized-marketplaces
             { marketplace: marketplace }
             { is-authorized: true }
@@ -245,6 +256,8 @@
     (let
         ((is-auth (default-to { is-authorized: false }
             (map-get? authorized-marketplaces { marketplace: tx-sender })))
+         ;; Validate that from and to are different principals
+         (valid-transfer (asserts! (not (is-eq from to)) (err err-invalid-data)))
          (from-data (unwrap! (map-get? user-data-usage { user: from }) (err err-invalid-data)))
          (to-data (default-to
             {
@@ -286,6 +299,8 @@
 (define-public (authorize-carrier (carrier principal))
     (begin
         (asserts! (is-eq tx-sender contract-owner) (err err-owner-only))
+        ;; Carrier must be a different address than the owner
+        (asserts! (not (is-eq carrier contract-owner)) (err err-invalid-data))
         (ok (map-set authorized-carriers
             { carrier: carrier }
             { is-authorized: true }
@@ -297,6 +312,8 @@
 (define-public (revoke-carrier (carrier principal))
     (begin
         (asserts! (is-eq tx-sender contract-owner) (err err-owner-only))
+        ;; Carrier must be a different address than the owner
+        (asserts! (not (is-eq carrier contract-owner)) (err err-invalid-data))
         (ok (map-set authorized-carriers
             { carrier: carrier }
             { is-authorized: false }
@@ -307,7 +324,9 @@
 ;; Deactivate a plan so no new subscriptions can use it
 (define-public (deactivate-plan (plan-id uint))
     (let
-        ((plan (unwrap! (map-get? data-plans { plan-id: plan-id }) (err err-invalid-plan))))
+        ;; Validate plan-id before using as map key
+        ((valid-id (asserts! (> plan-id u0) (err err-invalid-plan)))
+         (plan (unwrap! (map-get? data-plans { plan-id: plan-id }) (err err-invalid-plan))))
         (asserts! (is-eq tx-sender contract-owner) (err err-owner-only))
         (ok (map-set data-plans
             { plan-id: plan-id }
@@ -320,10 +339,14 @@
 (define-public (update-plan (plan-id uint) (data-amount uint) (duration-blocks uint) (price uint))
     (begin
         (asserts! (is-eq tx-sender contract-owner) (err err-owner-only))
+        ;; Validate plan-id before using as map key
+        (asserts! (> plan-id u0) (err err-invalid-plan))
         (asserts! (is-some (map-get? data-plans { plan-id: plan-id })) (err err-invalid-plan))
         (asserts! (> price u0) (err err-invalid-data))
         (asserts! (<= price (var-get max-plan-price)) (err err-price-too-high))
         (asserts! (> data-amount u0) (err err-invalid-data))
+        ;; Validate duration-blocks before using
+        (asserts! (> duration-blocks u0) (err err-invalid-data))
         (ok (map-set data-plans
             { plan-id: plan-id }
             {
